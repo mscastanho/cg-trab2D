@@ -19,6 +19,9 @@ extern Circle* arenaOut;
 extern Circle* arenaIn;
 extern Circle* player;
 extern Rect* startEnd;
+extern float PLAYER_SPEED;
+extern float SHOT_SPEED;
+extern float PLAYER_SIZE;
 
 string parseConfigFile (string filePath){
 
@@ -37,6 +40,11 @@ string parseConfigFile (string filePath){
     string type = adaElement->Attribute("tipo");
 
     string path = adaElement->Attribute("caminho");
+
+    XMLElement* carElement = configFile.FirstChildElement("aplicacao")->FirstChildElement("carro");
+
+    carElement->QueryFloatAttribute("velCarro",&PLAYER_SPEED);
+    carElement->QueryFloatAttribute("velTiro",&SHOT_SPEED);
 
     return path + name + "." + type;
   }
@@ -92,8 +100,10 @@ void parseCircle(XMLElement* c){
     }
   }else if(id == "Inimigo")
     enemies.push_back(circle);
-  else if(id == "Jogador")
+  else if(id == "Jogador"){
     player = circle;
+    PLAYER_SIZE = circle->get_radius()*2;
+  }
 }
 
 void parseRect(XMLElement* r){

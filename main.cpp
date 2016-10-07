@@ -27,7 +27,10 @@ float dy = 0;
 float windowHeight;
 float windowWidth;
 
-const float PLAYER_SPEED = 0.5;
+// Constants for player and shot speed (from config.xml)
+float PLAYER_SIZE = 0;
+float PLAYER_SPEED = 0;
+float SHOT_SPEED = 0;
 
 void printGlobals(){
 	cout << "\nArenaOut" << endl;
