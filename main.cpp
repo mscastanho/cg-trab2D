@@ -83,6 +83,7 @@ void setNewOrigin(){
 	pc.x -= dx;
 	pc.y = (windowHeight - pc.y) - dy;
 	player->set_center(pc);
+	playerCar = new Car(PLAYER_SIZE,RED,YELLOW);
 
 	// Adjust startEnd rectangle
 	Point se = startEnd->get_vertex();

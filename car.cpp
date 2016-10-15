@@ -21,7 +21,7 @@ void Car::draw (Point position){
 
   glPushMatrix();
 
-  glTranslatef(position.x,position.y,1);
+  glTranslatef(position.x,position.y,0);
 
   Color color;
   float L = this->size;

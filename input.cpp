@@ -104,7 +104,6 @@ void parseCircle(XMLElement* c){
     enemies.push_back(circle);
   else if(id == "Jogador"){
     player = circle;
-    playerCar = new Car(2*circle->get_radius(),RED,YELLOW);
     PLAYER_SIZE = circle->get_radius()*2;
   }
 }
