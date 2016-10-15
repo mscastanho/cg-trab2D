@@ -7,6 +7,7 @@
 #include "tinyxml2.h"
 #include "circle.h"
 #include "rect.h"
+#include "car.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
@@ -18,6 +19,7 @@ extern vector<Circle*> enemies;
 extern Circle* arenaOut;
 extern Circle* arenaIn;
 extern Circle* player;
+extern Car* playerCar;
 extern Rect* startEnd;
 extern float PLAYER_SPEED;
 extern float SHOT_SPEED;
@@ -66,8 +68,8 @@ Color parseColor(string color){
     return RED;
   else if (color == "magenta")
     return MAGENTA;
-  else if (color == "brown")
-    return BROWN;
+  else if (color == "yellow")
+    return YELLOW;
 
     return WHITE;
 }
@@ -102,6 +104,7 @@ void parseCircle(XMLElement* c){
     enemies.push_back(circle);
   else if(id == "Jogador"){
     player = circle;
+    playerCar = new Car(2*circle->get_radius(),RED,YELLOW);
     PLAYER_SIZE = circle->get_radius()*2;
   }
 }

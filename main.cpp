@@ -6,6 +6,7 @@
 #include "circle.h"
 #include "rect.h"
 #include "misc.h"
+#include "car.h"
 
 using namespace std;
 
@@ -13,6 +14,7 @@ vector<Circle*> enemies;
 Circle* arenaOut = NULL;
 Circle* arenaIn = NULL;
 Circle* player = NULL;
+Car* playerCar = NULL;
 Rect* startEnd = NULL;
 
 GLfloat gx=0,gy=0;
@@ -172,8 +174,12 @@ void display(void)
 
 	arenaOut->draw();
 	arenaIn->draw();
-	startEnd->draw();
+	Point transPoint = {(startEnd->get_vertex()).x,-(startEnd->get_vertex()).y};
+	startEnd->draw(transPoint);
+
 	player->draw();
+	Point carCenter = {player->get_center().x,player->get_center().y};
+	playerCar->draw(carCenter);
 
 	vector<Circle*>::iterator it;
 	for(it = enemies.begin();it != enemies.end(); it++)

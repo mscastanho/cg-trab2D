@@ -13,8 +13,9 @@ const Color GREEN = {0,1,0};
 const Color CYAN = {0,1,1};
 const Color RED = {1,0,0};
 const Color MAGENTA = {1,0,1};
-const Color BROWN = {1,1,0};
+const Color YELLOW = {1,1,0};
 const Color WHITE = {1,1,1};
+const Color GRAY = {0.1,0.1,0.1};
 
 typedef struct tPoint {
 	float x;

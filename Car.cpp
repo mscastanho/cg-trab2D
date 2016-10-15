@@ -1,9 +1,0 @@
-#include <GL/glut.h>
-#include <iostream>
-#include <cstdlib>
-#include <cstdio>
-#include <map>
-#include <cmath>
-#include "circle.h"
-#include "rect.h"
-#include "misc.h"

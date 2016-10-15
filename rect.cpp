@@ -19,11 +19,24 @@ Rect::Rect(float x, float y, float width, float height, Color c){
 }
 
 void Rect::draw (){
+
+	glColor3f(this->color.r,this->color.g,this->color.b);
+
+	glBegin(GL_QUADS);
+		glVertex2f(0,0);
+		glVertex2f(width,0);
+		glVertex2f(width,height);
+		glVertex2f(0,height);
+	glEnd();
+
+}
+
+void Rect::draw (Point pos){
 	glPushMatrix();
 
 	glColor3f(this->color.r,this->color.g,this->color.b);
 
-	glTranslatef(this->vertex.x,-this->vertex.y,1);
+	glTranslatef(pos.x,pos.y,1);
 	// Needed to invert y axis because of SVG and OpenGL's different y-axis
 	// orientation
 
@@ -32,8 +45,38 @@ void Rect::draw (){
 		glVertex2f(width,0);
 		glVertex2f(width,height);
 		glVertex2f(0,height);
+	glEnd();
 
+	glPopMatrix();
+}
 
+void drawRect (float width, float height, Color c){
+
+	glColor3f(c.r,c.g,c.b);
+
+	glBegin(GL_QUADS);
+		glVertex2f(0,0);
+		glVertex2f(width,0);
+		glVertex2f(width,height);
+		glVertex2f(0,height);
+	glEnd();
+
+}
+
+void drawRect (float width, float height, Color c, float xTrans, float yTrans){
+	glPushMatrix();
+
+	glColor3f(c.r,c.g,c.b);
+
+	glTranslatef(xTrans,yTrans,1);
+	// Needed to invert y axis because of SVG and OpenGL's different y-axis
+	// orientation
+
+	glBegin(GL_QUADS);
+		glVertex2f(0,0);
+		glVertex2f(width,0);
+		glVertex2f(width,height);
+		glVertex2f(0,height);
 	glEnd();
 
 	glPopMatrix();

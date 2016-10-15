@@ -19,10 +19,14 @@ class Rect {
 	public:
 	Rect(float x, float y, float width, float height, Color c);
 	void draw ();
+	void draw (Point pos);
 	Point get_vertex() const;
 	void set_vertex(Point v1);
 	void print() const;
 	friend ostream& operator<<(ostream& output, const Rect& c);
 };
+
+void drawRect (float width, float height, Color c);
+void drawRect (float width, float height, Color c, float xTrans, float yTrans);
 
 #endif /* RECT_H_ */
