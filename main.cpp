@@ -119,9 +119,9 @@ void setNewOrigin(){
 
 void passiveMotion(int x, int y){
 
-	if(x > lastMouseX)
+	if(x > lastMouseX && canonAngle > -45+ANGLE_SPEED )
 		canonAngle -= ANGLE_SPEED;
-	else if (x < lastMouseX)
+	else if (x < lastMouseX && canonAngle < 45-ANGLE_SPEED)
 		canonAngle += ANGLE_SPEED;
 
 	lastMouseX = x;
