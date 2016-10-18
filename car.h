@@ -1,6 +1,7 @@
 #ifndef CAR_H_
 #define CAR_H_
 
+#include <GL/glut.h>
 #include "misc.h"
 #include <iostream>
 #include <stdio.h>
@@ -15,7 +16,7 @@ class Car {
 
   public:
   Car(float size, Color bodyColor, Color styleColor);
-  void draw (Point position);
+  void draw (Point position, GLfloat wAngle, GLfloat cAngle);
 };
 
 #endif /* CAR_H_ */

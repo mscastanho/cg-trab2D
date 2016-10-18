@@ -7,6 +7,7 @@
 #include "rect.h"
 #include "misc.h"
 #include "car.h"
+#include <cmath>
 
 using namespace std;
 
@@ -19,6 +20,7 @@ Rect* startEnd = NULL;
 
 GLfloat gx=0,gy=0;
 GLfloat pgx=0,pgy=0;
+GLfloat wheelAngle=0; // Car angle
 int keyStatus[256];
 
 // Deltas to adjust all the coordinates to the new coordinate system
@@ -29,10 +31,14 @@ float dy = 0;
 float windowHeight;
 float windowWidth;
 
-// Constants for player and shot speed (from config.xml)
+// Constants for player and bullets
 float PLAYER_SIZE = 0;
 float PLAYER_SPEED = 0;
 float SHOT_SPEED = 0;
+const float ANGLE_SPEED = 1;
+
+// Global to sabe player's current orientation
+float playerAngle = 0;
 
 void printGlobals(){
 	cout << "\nArenaOut" << endl;
@@ -83,7 +89,7 @@ void setNewOrigin(){
 	pc.x -= dx;
 	pc.y = (windowHeight - pc.y) - dy;
 	player->set_center(pc);
-	playerCar = new Car(PLAYER_SIZE,RED,YELLOW);
+	playerCar = new Car(PLAYER_SIZE/1.3,RED,YELLOW);
 
 	// Adjust startEnd rectangle
 	Point se = startEnd->get_vertex();
@@ -114,21 +120,46 @@ void keyPress(unsigned char key, int x, int y)
 
 void idle (void)
 {
+
+	float deltaX, deltaY;
+
 	// Save the previous values of gx and gy
 	pgx = gx;
 	pgy = gy;
 
-	if( keyStatus['W'] == 1 || keyStatus['w'] == 1 )
-		gy += PLAYER_SPEED;
+	if((keyStatus['D'] == 1 || keyStatus['d'] == 1) && wheelAngle > -45+ANGLE_SPEED)
+		wheelAngle -= ANGLE_SPEED;
 
-	if( keyStatus['S'] == 1 || keyStatus['s'] == 1 )
-		gy -= PLAYER_SPEED;
+	if((keyStatus['A'] == 1 || keyStatus['a'] == 1) && wheelAngle < 45-ANGLE_SPEED)
+		wheelAngle += ANGLE_SPEED;
 
-	if( keyStatus['D'] == 1 || keyStatus['d'] == 1 )
-		gx += PLAYER_SPEED;
+	if( keyStatus['W'] == 1 || keyStatus['w'] == 1 ){
+		if(wheelAngle > 0){
+			wheelAngle -= 1;
+			playerAngle += 1;
+		}else if(wheelAngle < 0){
+			wheelAngle += 1;
+			playerAngle -= 1;
+		}
 
-	if( keyStatus['A'] == 1 || keyStatus['a'] == 1 )
-		gx -= PLAYER_SPEED;
+		gy += PLAYER_SPEED*cos(M_PI*playerAngle/180.0);
+		gx += -PLAYER_SPEED*sin(M_PI*playerAngle/180.0);
+
+	}
+
+	if( keyStatus['S'] == 1 || keyStatus['s'] == 1 ){
+		if(wheelAngle > 0){
+			wheelAngle -= 1;
+			playerAngle -= 1;
+		}else if(wheelAngle < 0){
+			wheelAngle += 1;
+			playerAngle += 1;
+		}
+
+		gy -= PLAYER_SPEED*cos(M_PI*playerAngle/180.0);
+		gx -= -PLAYER_SPEED*sin(M_PI*playerAngle/180.0);
+
+	}
 
 	glutPostRedisplay();
 }
@@ -178,9 +209,9 @@ void display(void)
 	Point transPoint = {(startEnd->get_vertex()).x,-(startEnd->get_vertex()).y};
 	startEnd->draw(transPoint);
 
-	player->draw();
+	//player->draw();
 	Point carCenter = {player->get_center().x,player->get_center().y};
-	playerCar->draw(carCenter);
+	playerCar->draw(carCenter,wheelAngle,playerAngle);
 
 	vector<Circle*>::iterator it;
 	for(it = enemies.begin();it != enemies.end(); it++)
