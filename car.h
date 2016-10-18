@@ -16,7 +16,7 @@ class Car {
 
   public:
   Car(float size, Color bodyColor, Color styleColor);
-  void draw (Point position, GLfloat wAngle, GLfloat cAngle);
+  void draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonAngle);
 };
 
 #endif /* CAR_H_ */

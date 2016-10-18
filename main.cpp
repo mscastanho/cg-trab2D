@@ -37,8 +37,16 @@ float PLAYER_SPEED = 0;
 float SHOT_SPEED = 0;
 const float ANGLE_SPEED = 1;
 
-// Global to sabe player's current orientation
+// Global to sabe player and canon's current orientation
 float playerAngle = 0;
+float canonAngle = 0;
+
+// Global to save last mouse position
+float lastMouseX;
+float lastMouseY;
+
+// List of bullets that have been shot
+vector<Rect> bullets;
 
 void printGlobals(){
 	cout << "\nArenaOut" << endl;
@@ -107,6 +115,16 @@ void setNewOrigin(){
 		(*it)->set_center(center);
 	}
 
+}
+
+void passiveMotion(int x, int y){
+
+	if(x > lastMouseX)
+		canonAngle -= ANGLE_SPEED;
+	else if (x < lastMouseX)
+		canonAngle += ANGLE_SPEED;
+
+	lastMouseX = x;
 }
 
 void keyUp(unsigned char key, int x, int y)
@@ -211,7 +229,7 @@ void display(void)
 
 	//player->draw();
 	Point carCenter = {player->get_center().x,player->get_center().y};
-	playerCar->draw(carCenter,wheelAngle,playerAngle);
+	playerCar->draw(carCenter,wheelAngle,playerAngle,canonAngle);
 
 	vector<Circle*>::iterator it;
 	for(it = enemies.begin();it != enemies.end(); it++)
@@ -288,6 +306,7 @@ int main (int argc, char** argv)
 				glutKeyboardFunc(keyPress);
 				glutKeyboardUpFunc(keyUp);
 				glutIdleFunc(idle);
+				glutPassiveMotionFunc(passiveMotion);
 				glutMainLoop();
 	}else{
 		cout << "Nome do arquivo da arena vazio. Por favor verifique o seu config.xml\n";

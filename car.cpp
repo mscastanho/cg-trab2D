@@ -17,12 +17,12 @@ Car::Car(float size, Color bodyColor, Color styleColor){
   this->styleColor = styleColor;
 }
 
-void Car::draw (Point position, GLfloat wAngle, GLfloat cAngle){
+void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonAngle){
 
   glPushMatrix();
 
   glTranslatef(position.x,position.y,0);
-  glRotatef(cAngle,0,0,1.0);
+  glRotatef(carAngle,0,0,1.0);
   Color color;
   float L = this->size;
 
@@ -68,10 +68,14 @@ void Car::draw (Point position, GLfloat wAngle, GLfloat cAngle){
   // ==============
 
   // Canon
+  glPushMatrix();
+  glTranslatef(0,bHeight/2,0);
+  glRotatef(canonAngle,0,0,1.0);
   color = YELLOW;
   float cWidth = 0.05*L;
   float cHeight = 0.2*L;
-  drawRect(cWidth,cHeight,color,-cWidth/2,bHeight/2);
+  drawRect(cWidth,cHeight,color,-cWidth/2,0);
+  glPopMatrix();
   // =============
 
   // Windshield
