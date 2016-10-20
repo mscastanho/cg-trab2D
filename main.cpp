@@ -122,28 +122,32 @@ void setNewOrigin(){
 
 }
 
+bool isOutsideWindow(Bullet* b){
+
+	Point pos = b->get_position();
+
+	//Check if bullet is out of the window
+	bool cond1 = pos.x > windowWidth/2;
+	bool cond2 = pos.x < -windowWidth/2;
+	bool cond3 = pos.y > windowHeight/2;
+	bool cond4 = pos.y < -windowHeight/2;
+
+	return cond1 || cond2 || cond3 || cond4;
+}
+
 void updateBullets(){
 
 	list<Bullet*>::iterator it;
+	list<int> toDelete;
+	int i;
 
 	//Update bullets
-	for(it = bullets.begin();it != bullets.end(); it++)
-			(*it)->update(BULLET_SPEED);
+	for(it = bullets.begin(), i = 0;it != bullets.end(); it++, i++)
+		(*it)->update(BULLET_SPEED);
 
-	// Delete the ones that are now out the window
-	for(it = bullets.begin();it != bullets.end(); it++){
+		bullets.remove_if(isOutsideWindow);
 
-		Point pos = (*it)->get_position();
-		//Check if bullet is out of the window
-		bool cond1 = pos.x > windowWidth/2;
-		bool cond2 = pos.x < -windowWidth/2;
-		bool cond3 = pos.y > windowHeight/2;
-		bool cond4 = pos.y < -windowHeight/2;
-
-		if(cond1 || cond2 || cond3 || cond4 )
-			bullets.erase(it);
-	}
-
+	cout << bullets.size() << endl;
 }
 
 void displayBullets(){
