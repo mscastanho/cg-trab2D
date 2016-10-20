@@ -1,12 +1,14 @@
 #include <GL/glut.h>
 #include <map>
 #include <vector>
+#include <list>
 #include <iterator>
 #include "input.h"
 #include "circle.h"
 #include "rect.h"
 #include "misc.h"
 #include "car.h"
+#include "bullet.h"
 #include <cmath>
 
 using namespace std;
@@ -34,7 +36,7 @@ float windowWidth;
 // Constants for player and bullets
 float PLAYER_SIZE = 0;
 float PLAYER_SPEED = 0;
-float SHOT_SPEED = 0;
+float BULLET_SPEED = 0;
 const float ANGLE_SPEED = 1;
 
 // Global to sabe player and canon's current orientation
@@ -45,8 +47,11 @@ float canonAngle = 0;
 float lastMouseX;
 float lastMouseY;
 
+// Global to save the mouse status
+bool mousePressed;
+
 // List of bullets that have been shot
-vector<Rect> bullets;
+list<Bullet*> bullets;
 
 void printGlobals(){
 	cout << "\nArenaOut" << endl;
@@ -117,6 +122,58 @@ void setNewOrigin(){
 
 }
 
+void updateBullets(){
+
+	list<Bullet*>::iterator it;
+
+	//Update bullets
+	for(it = bullets.begin();it != bullets.end(); it++)
+			(*it)->update(BULLET_SPEED);
+
+	// Delete the ones that are now out the window
+	for(it = bullets.begin();it != bullets.end(); it++){
+
+		Point pos = (*it)->get_position();
+		//Check if bullet is out of the window
+		bool cond1 = pos.x > windowWidth/2;
+		bool cond2 = pos.x < -windowWidth/2;
+		bool cond3 = pos.y > windowHeight/2;
+		bool cond4 = pos.y < -windowHeight/2;
+
+		if(cond1 || cond2 || cond3 || cond4 )
+			bullets.erase(it);
+	}
+
+}
+
+void displayBullets(){
+	list<Bullet*>::iterator it;
+
+	for(it = bullets.begin();it != bullets.end(); it++)
+		(*it)->draw();
+}
+
+void mouse(int botao, int estado, int x, int y){
+	// Changing y axis orientation
+	y = windowHeight - y;
+
+	if(botao == GLUT_LEFT_BUTTON){
+
+		if(estado == GLUT_DOWN)
+			mousePressed = true;
+		else if(mousePressed){
+			// In this case the mouse was pressed.
+			// trying to detect a press+release task
+			mousePressed = false;
+			Point carCenter = {player->get_center().x,player->get_center().y};
+			Bullet* b = new Bullet(carCenter,GREEN,playerAngle);
+			bullets.push_back(b);
+		}
+	}
+
+	glutPostRedisplay();
+}
+
 void passiveMotion(int x, int y){
 
 	if(x > lastMouseX && canonAngle > -45+ANGLE_SPEED )
@@ -179,6 +236,8 @@ void idle (void)
 
 	}
 
+	updateBullets();
+
 	glutPostRedisplay();
 }
 
@@ -234,6 +293,8 @@ void display(void)
 	vector<Circle*>::iterator it;
 	for(it = enemies.begin();it != enemies.end(); it++)
 		(*it)->draw();
+
+	displayBullets();
 
 	/* Trocar buffers */
 	glutSwapBuffers();
@@ -304,6 +365,7 @@ int main (int argc, char** argv)
 				setNewOrigin();
 				glutDisplayFunc(display);
 				glutKeyboardFunc(keyPress);
+				glutMouseFunc(mouse);
 				glutKeyboardUpFunc(keyUp);
 				glutIdleFunc(idle);
 				glutPassiveMotionFunc(passiveMotion);

@@ -22,7 +22,7 @@ extern Circle* player;
 extern Car* playerCar;
 extern Rect* startEnd;
 extern float PLAYER_SPEED;
-extern float SHOT_SPEED;
+extern float BULLET_SPEED;
 extern float PLAYER_SIZE;
 
 string parseConfigFile (string filePath){
@@ -46,7 +46,7 @@ string parseConfigFile (string filePath){
     XMLElement* carElement = configFile.FirstChildElement("aplicacao")->FirstChildElement("carro");
 
     carElement->QueryFloatAttribute("velCarro",&PLAYER_SPEED);
-    carElement->QueryFloatAttribute("velTiro",&SHOT_SPEED);
+    carElement->QueryFloatAttribute("velTiro",&BULLET_SPEED);
 
     return path + name + "." + type;
   }

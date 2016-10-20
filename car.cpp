@@ -9,8 +9,6 @@
 #include "misc.h"
 #include "car.h"
 
-//Position represents the center of the car
-
 Car::Car(float size, Color bodyColor, Color styleColor){
   this->size = size;
   this->bodyColor = bodyColor;
@@ -88,4 +86,22 @@ void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonA
   //cout << bWidth << endl;
   glPopMatrix();
 
+}
+
+// This function returns the coordinates of the canon`s far end
+Point Car::getCanonPos (Point pos, float carAngle, float canonAngle){
+  //x and y corresponding to the car`s coordinate system
+  float x = 0;
+  float y = 0.5*this->size;
+
+  x += -0.2*this->size*sin(M_PI*canonAngle/180.0);
+  y += 0.2*this->size*cos(M_PI*canonAngle/180.0);
+
+  float mag = sqrt(x*x + y*y);
+  float worldX = pos.x - mag*sin(M_PI*carAngle/180.0);
+  float worldY = pos.y + mag*cos(M_PI*carAngle/180.0);
+
+  Point p = {worldX,worldY};
+  
+  return p;
 }
