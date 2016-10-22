@@ -4,7 +4,7 @@
 #include <cmath>
 #include "bullet.h"
 #include "misc.h"
-#include "rect.h"
+#include "circle.h"
 
 Bullet::Bullet (Point position, Color color, float angle){
   this->position = position;
@@ -18,7 +18,7 @@ void Bullet::draw(){
   glTranslatef(this->position.x,this->position.y,0);
   glRotatef(angle,0,0,1.0);
 
-  drawRect(BULLET_WIDTH,BULLET_HEIGHT,this->color);
+  drawCircle(BULLET_WIDTH,this->color);
   glPopMatrix();
 }
 

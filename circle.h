@@ -31,4 +31,6 @@ class Circle {
 	friend ostream& operator<<(ostream& output, const Circle& c);
 };
 
+void drawCircle (float radius, Color color);
+
 #endif /* CIRCLE_H_ */

@@ -135,19 +135,18 @@ bool isOutsideWindow(Bullet* b){
 	return cond1 || cond2 || cond3 || cond4;
 }
 
-void updateBullets(){
+void updateBullets(GLdouble timeDiff){
 
 	list<Bullet*>::iterator it;
 	list<int> toDelete;
 	int i;
+	float bulletSpeed = BULLET_SPEED*timeDiff;
 
 	//Update bullets
 	for(it = bullets.begin(), i = 0;it != bullets.end(); it++, i++)
-		(*it)->update(BULLET_SPEED);
+		(*it)->update(bulletSpeed);
 
 		bullets.remove_if(isOutsideWindow);
-
-	cout << bullets.size() << endl;
 }
 
 void displayBullets(){
@@ -155,6 +154,45 @@ void displayBullets(){
 
 	for(it = bullets.begin();it != bullets.end(); it++)
 		(*it)->draw();
+}
+
+void updateCar(GLdouble timeDiff) {
+
+	float playerSpeed = PLAYER_SPEED*timeDiff;
+
+	if((keyStatus['D'] == 1 || keyStatus['d'] == 1) && wheelAngle > -45+ANGLE_SPEED)
+		wheelAngle -= ANGLE_SPEED;
+
+	if((keyStatus['A'] == 1 || keyStatus['a'] == 1) && wheelAngle < 45-ANGLE_SPEED)
+		wheelAngle += ANGLE_SPEED;
+
+	if( keyStatus['W'] == 1 || keyStatus['w'] == 1 ){
+		if(wheelAngle > 0){
+			wheelAngle -= 1;
+			playerAngle += 1;
+		}else if(wheelAngle < 0){
+			wheelAngle += 1;
+			playerAngle -= 1;
+		}
+
+		gy += playerSpeed*cos(M_PI*playerAngle/180.0);
+		gx += -playerSpeed*sin(M_PI*playerAngle/180.0);
+
+	}
+
+	if( keyStatus['S'] == 1 || keyStatus['s'] == 1 ){
+		if(wheelAngle > 0){
+			wheelAngle -= 1;
+			playerAngle -= 1;
+		}else if(wheelAngle < 0){
+			wheelAngle += 1;
+			playerAngle += 1;
+		}
+
+		gy -= playerSpeed*cos(M_PI*playerAngle/180.0);
+		gx -= -playerSpeed*sin(M_PI*playerAngle/180.0);
+
+	}
 }
 
 void mouse(int botao, int estado, int x, int y){
@@ -199,49 +237,22 @@ void keyPress(unsigned char key, int x, int y)
 
 void idle (void)
 {
-
+	static GLdouble previousTime = 0;
+	GLdouble currentTime;
+	GLdouble timeDifference;
 	float deltaX, deltaY;
+
+	// Get time from the beginning of the game
+	currentTime = glutGet(GLUT_ELAPSED_TIME);
+	timeDifference = currentTime - previousTime;
+	previousTime = currentTime;
 
 	// Save the previous values of gx and gy
 	pgx = gx;
 	pgy = gy;
 
-	if((keyStatus['D'] == 1 || keyStatus['d'] == 1) && wheelAngle > -45+ANGLE_SPEED)
-		wheelAngle -= ANGLE_SPEED;
-
-	if((keyStatus['A'] == 1 || keyStatus['a'] == 1) && wheelAngle < 45-ANGLE_SPEED)
-		wheelAngle += ANGLE_SPEED;
-
-	if( keyStatus['W'] == 1 || keyStatus['w'] == 1 ){
-		if(wheelAngle > 0){
-			wheelAngle -= 1;
-			playerAngle += 1;
-		}else if(wheelAngle < 0){
-			wheelAngle += 1;
-			playerAngle -= 1;
-		}
-
-		gy += PLAYER_SPEED*cos(M_PI*playerAngle/180.0);
-		gx += -PLAYER_SPEED*sin(M_PI*playerAngle/180.0);
-
-	}
-
-	if( keyStatus['S'] == 1 || keyStatus['s'] == 1 ){
-		if(wheelAngle > 0){
-			wheelAngle -= 1;
-			playerAngle -= 1;
-		}else if(wheelAngle < 0){
-			wheelAngle += 1;
-			playerAngle += 1;
-		}
-
-		gy -= PLAYER_SPEED*cos(M_PI*playerAngle/180.0);
-		gx -= -PLAYER_SPEED*sin(M_PI*playerAngle/180.0);
-
-	}
-
-	updateBullets();
-
+	updateCar(timeDifference);
+	updateBullets(timeDifference);
 	glutPostRedisplay();
 }
 

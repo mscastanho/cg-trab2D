@@ -24,10 +24,23 @@ void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonA
   Color color;
   float L = this->size;
 
-  // Main body
-  color = this->bodyColor;
+  // Main body properties
   float bHeight = L;
   float bWidth = L*0.5;
+
+  // Canon (need to draw canon first to be behind the body)
+  glPushMatrix();
+  glTranslatef(0,bHeight/2-bHeight/10,0);
+  glRotatef(canonAngle,0,0,1.0);
+  color = YELLOW;
+  float cWidth = 0.1*L;
+  float cHeight = 0.3*L;
+  drawRect(cWidth,cHeight,color,-cWidth/2,0);
+  glPopMatrix();
+  // =============
+
+  //Draw main body
+  color = this->bodyColor;
   drawRect(bWidth,bHeight,color,-bWidth/2,-bHeight/2);
   // ============
 
@@ -65,17 +78,6 @@ void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonA
   drawRect(wWidth,wHeight,color,(bWidth/2+waWidth),-(axisMidY + wHeight/2));
   // ==============
 
-  // Canon
-  glPushMatrix();
-  glTranslatef(0,bHeight/2,0);
-  glRotatef(canonAngle,0,0,1.0);
-  color = YELLOW;
-  float cWidth = 0.05*L;
-  float cHeight = 0.2*L;
-  drawRect(cWidth,cHeight,color,-cWidth/2,0);
-  glPopMatrix();
-  // =============
-
   // Windshield
   color = BLACK;
   float wsWidth = bWidth;
@@ -102,6 +104,6 @@ Point Car::getCanonPos (Point pos, float carAngle, float canonAngle){
   float worldY = pos.y + mag*cos(M_PI*carAngle/180.0);
 
   Point p = {worldX,worldY};
-  
+
   return p;
 }
