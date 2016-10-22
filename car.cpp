@@ -8,11 +8,13 @@
 #include "rect.h"
 #include "misc.h"
 #include "car.h"
+#include "bullet.h"
 
 Car::Car(float size, Color bodyColor, Color styleColor){
   this->size = size;
   this->bodyColor = bodyColor;
   this->styleColor = styleColor;
+  this->moving = false;
 }
 
 void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonAngle){
@@ -25,29 +27,16 @@ void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonA
   float L = this->size;
 
   // Main body properties
-  float bHeight = L;
-  float bWidth = L*0.5;
-
-  // Canon (need to draw canon first to be behind the body)
-  glPushMatrix();
-  glTranslatef(0,bHeight/2-bHeight/10,0);
-  glRotatef(canonAngle,0,0,1.0);
-  color = YELLOW;
-  float cWidth = 0.1*L;
-  float cHeight = 0.3*L;
-  drawRect(cWidth,cHeight,color,-cWidth/2,0);
-  glPopMatrix();
-  // =============
-
-  //Draw main body
+  float bHeight = BODY_HEIGHT*L;
+  float bWidth = BODY_WIDTH*L;
   color = this->bodyColor;
   drawRect(bWidth,bHeight,color,-bWidth/2,-bHeight/2);
   // ============
 
   // Wheel axes
-  color = GRAY;
-  float waWidth = 0.075*L;
-  float waHeight = 0.05*L;
+  color = WHITE;
+  float waWidth = WHEEL_AXIS_WIDTH*L;
+  float waHeight = WHEEL_AXIS_HEIGHT*L;
   drawRect(waWidth,waHeight,color,bWidth/2,0.7*bHeight/2);
   drawRect(waWidth,waHeight,color,-(bWidth/2+waWidth),0.7*bHeight/2);
   drawRect(waWidth,waHeight,color,-(bWidth/2+waWidth),-(0.7*bHeight/2 + waHeight));
@@ -55,9 +44,9 @@ void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonA
   // =============
 
   // Wheels
-  color = YELLOW;
-  float wWidth = 0.15*L;
-  float wHeight = 0.25*L;
+  color = GRAY;
+  float wWidth = WHEEL_WIDTH*L;
+  float wHeight = WHEEL_HEIGHT*L;
   float axisMidY = 0.7*bHeight/2 + waHeight/2;
 
   //Front Wheels
@@ -78,32 +67,87 @@ void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonA
   drawRect(wWidth,wHeight,color,(bWidth/2+waWidth),-(axisMidY + wHeight/2));
   // ==============
 
+  // Canon (need to draw canon first to be behind the body)
+  glPushMatrix();
+  glTranslatef(0,bHeight/2,0);
+  glRotatef(canonAngle,0,0,1.0);
+  color = YELLOW;
+  float cWidth = CANON_WIDTH*L;
+  float cHeight = CANON_HEIGHT*L;
+  drawRect(cWidth,cHeight,color,-cWidth/2,0);
+  glPopMatrix();
+  // =============
+
   // Windshield
   color = BLACK;
-  float wsWidth = bWidth;
-  float wsHeight = 0.2*bHeight;
+  float wsWidth = WINDSHIELD_WIDTH*L;
+  float wsHeight = WINDSHIELD_HEIGHT*L;
   drawRect(wsWidth,wsHeight,color,-bWidth/2,bHeight/8);
   // =============
 
-  //cout << bWidth << endl;
-  glPopMatrix();
+  // Exhaust Pipes
+  color = YELLOW;
+  float epWidth = EXHAUST_PIPE_WIDTH*L;
+  float epHeight = EXHAUST_PIPE_HEIGHT*L;
+  drawRect(epWidth,epHeight,color,-0.45*bWidth,-bHeight/2-epHeight);
+  drawRect(epWidth,epHeight,color,0.45*bWidth-epWidth,-bHeight/2-epHeight);
+  // =============
 
+  // Draw smoke if car is moving
+  static int n = 1; //represents the number of circles used to draw the smoke
+  Color smokeColors[] = {LIGHT_GRAY,GRAY,DARK_GRAY};
+  float radius = epWidth;
+  float dy = 0;
+
+  if(this->moving){
+    int i;
+    for(i = 0 ; i < n ; i++ ){
+      Point centerLeft = {-0.45*bWidth+epWidth/2,-bHeight/2-epHeight-radius - dy};
+      drawCircle(radius,centerLeft,smokeColors[i]);
+      Point centerRight = {0.45*bWidth-epWidth/2,-bHeight/2-epHeight-radius - dy};
+      drawCircle(radius,centerRight,smokeColors[i]);
+
+      dy += radius*1.5;
+      radius *= 1.2;
+    }
+
+    static GLdouble lastDrawTime = 0;
+    GLdouble now = glutGet(GLUT_ELAPSED_TIME);;
+
+    if(now - lastDrawTime > 150){
+      n = (++n)%4; // Make n vary only between 0 and 3
+      lastDrawTime = now;
+    }
+
+  }
+  glPopMatrix();
 }
 
-// This function returns the coordinates of the canon`s far end
-Point Car::getCanonPos (Point pos, float carAngle, float canonAngle){
-  //x and y corresponding to the car`s coordinate system
-  float x = 0;
-  float y = 0.5*this->size;
+// This function returns the coordinates of a bullet leaving the canon
+Point Car::getBulletInitPos (Point carPos, float carAngle, float canonAngle){
 
-  x += -0.2*this->size*sin(M_PI*canonAngle/180.0);
-  y += 0.2*this->size*cos(M_PI*canonAngle/180.0);
+  Point pCanon = {0,0};
 
-  float mag = sqrt(x*x + y*y);
-  float worldX = pos.x - mag*sin(M_PI*carAngle/180.0);
-  float worldY = pos.y + mag*cos(M_PI*carAngle/180.0);
+  // Translate from the canon's end position
+  Point canonEndPos = {0,CANON_HEIGHT*this->size};
+  pCanon = translateFrom(pCanon,canonEndPos);
 
-  Point p = {worldX,worldY};
+  // Rotate by the canon's rotation
+  pCanon = rotateBy(pCanon,canonAngle);
 
-  return p;
+  // Translate from canon position
+  Point canonPos = {0,BODY_HEIGHT*this->size/2};
+  pCanon = translateFrom(pCanon,canonPos);
+
+  // Rotate by the car's rotation
+  pCanon = rotateBy(pCanon,carAngle);
+
+  // First translate from car position
+  pCanon = translateFrom(pCanon,carPos);
+
+  return pCanon;
+}
+
+void Car::setMoving(bool status){
+  this->moving = status;
 }

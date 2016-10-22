@@ -159,6 +159,7 @@ void displayBullets(){
 void updateCar(GLdouble timeDiff) {
 
 	float playerSpeed = PLAYER_SPEED*timeDiff;
+	float dx=0,dy=0;
 
 	if((keyStatus['D'] == 1 || keyStatus['d'] == 1) && wheelAngle > -45+ANGLE_SPEED)
 		wheelAngle -= ANGLE_SPEED;
@@ -175,8 +176,8 @@ void updateCar(GLdouble timeDiff) {
 			playerAngle -= 1;
 		}
 
-		gy += playerSpeed*cos(M_PI*playerAngle/180.0);
-		gx += -playerSpeed*sin(M_PI*playerAngle/180.0);
+		dy = playerSpeed*cos(M_PI*playerAngle/180.0);
+		dx = -playerSpeed*sin(M_PI*playerAngle/180.0);
 
 	}
 
@@ -189,10 +190,18 @@ void updateCar(GLdouble timeDiff) {
 			playerAngle += 1;
 		}
 
-		gy -= playerSpeed*cos(M_PI*playerAngle/180.0);
-		gx -= -playerSpeed*sin(M_PI*playerAngle/180.0);
+		dy = - playerSpeed*cos(M_PI*playerAngle/180.0);
+		dx = +playerSpeed*sin(M_PI*playerAngle/180.0);
 
 	}
+
+	gy += dy;
+	gx += dx;
+
+	if(dy == 0.0 && dy == 0.0)
+		playerCar->setMoving(false);
+	else
+		playerCar->setMoving(true);
 }
 
 void mouse(int botao, int estado, int x, int y){
@@ -208,7 +217,8 @@ void mouse(int botao, int estado, int x, int y){
 			// trying to detect a press+release task
 			mousePressed = false;
 			Point carCenter = {player->get_center().x,player->get_center().y};
-			Bullet* b = new Bullet(carCenter,GREEN,playerAngle);
+			Point canonPosition = playerCar->getBulletInitPos(carCenter,playerAngle,canonAngle);
+			Bullet* b = new Bullet(canonPosition,GREEN,playerAngle+canonAngle);
 			bullets.push_back(b);
 		}
 	}
@@ -254,6 +264,7 @@ void idle (void)
 	updateCar(timeDifference);
 	updateBullets(timeDifference);
 	glutPostRedisplay();
+
 }
 
 // This function returns true if the player has collided with any of the enemies
@@ -281,19 +292,15 @@ bool player_collided(){
 void display(void)
 {
 	player->increment_center(gx,0);
-
-	bool collisionX = player_collided();
-
-	if(collisionX)
-	 	player->increment_center(-gx,0);
-
 	player->increment_center(0,gy);
 
+	bool collisionX = player_collided();
 	bool collisionY = player_collided();
 
-	if(collisionY)
+	if(collisionX || collisionY){
+	 	player->increment_center(-gx,0);
 	 	player->increment_center(0,-gy);
-
+}
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	arenaOut->draw();

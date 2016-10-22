@@ -32,5 +32,6 @@ class Circle {
 };
 
 void drawCircle (float radius, Color color);
+void drawCircle (float radius, Point center, Color color);
 
 #endif /* CIRCLE_H_ */

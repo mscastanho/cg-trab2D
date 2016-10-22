@@ -5,8 +5,7 @@
 
 using namespace std;
 
-const float BULLET_WIDTH = 2;
-const float BULLET_HEIGHT = 8;
+const float BULLET_RADIUS = 2;
 
 // Class representing a bullet
 class Bullet {

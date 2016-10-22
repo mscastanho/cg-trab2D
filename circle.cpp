@@ -176,3 +176,28 @@ void drawCircle (float radius, Color color){
 	glEnd();
 
 }
+
+//Draws a circle centered at center
+void drawCircle (float radius, Point center, Color color){
+
+	glPushMatrix();
+
+	glColor3f(color.r,color.g,color.b);
+	glTranslatef(center.x,center.y,0);
+
+	// Needed to invert y axis because of SVG and OpenGL's different y-axis
+	// orientation
+
+	int i;
+	float x,y;
+	glBegin(GL_POLYGON);
+	// Let`s use 36 vertices to draw the circle as a polygon
+	for(i = 0 ; i < 360 ; i += 4 ){
+		x = radius*cos(M_PI*i/180.0);
+		y = radius*sin(M_PI*i/180.0);
+		glVertex3f(x,y,0);
+	}
+	glEnd();
+
+	glPopMatrix();
+}

@@ -18,7 +18,7 @@ void Bullet::draw(){
   glTranslatef(this->position.x,this->position.y,0);
   glRotatef(angle,0,0,1.0);
 
-  drawCircle(BULLET_WIDTH,this->color);
+  drawCircle(BULLET_RADIUS,this->color);
   glPopMatrix();
 }
 
