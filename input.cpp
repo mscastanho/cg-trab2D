@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <vector>
+#include <time.h>
 #include "input.h"
 #include "misc.h"
 #include "tinyxml2.h"
@@ -100,7 +101,9 @@ void parseCircle(XMLElement* c){
       }
     }
   }else if(id == "Inimigo"){
-    Car* enemy = new Car(center,r,RED,0,0,0);
+
+    int randomAngle = rand()%360;
+    Car* enemy = new Car(center,r,RED,randomAngle,0,0);
     enemies.push_back(enemy);
 
   }else if(id == "Jogador"){
@@ -131,6 +134,11 @@ void parseRect(XMLElement* r){
 void parseSVGFile (string filePath){
 
   XMLDocument arenaFile;
+
+  // Define seed for random number generation used later
+  time_t seconds;
+  time(&seconds);
+  srand((unsigned int) seconds);
 
   // Treat case when the filePath has '~'
   if(filePath[0] == '~'){

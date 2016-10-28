@@ -47,6 +47,10 @@ bool mousePressed;
 // List of bullets that have been shot
 list<Bullet*> bullets;
 
+// Text variable
+static char str[2000];
+void * font = GLUT_BITMAP_9_BY_15;
+
 // This function calculates the deltas to adjust all coordinates so the center
 // of the arena is the new origin
 void setNewOrigin(){
@@ -259,6 +263,38 @@ bool player_collided(){
 
 }
 
+void printScore(){
+
+	static GLdouble initTime = 0;
+	static int minutes;
+	GLdouble seconds;
+	GLdouble currentTime;
+	GLdouble elapsed;
+
+	// Get time from the beginning of the game
+	currentTime = glutGet(GLUT_ELAPSED_TIME);
+
+	elapsed = currentTime - initTime;
+	minutes = (int) elapsed/60000;
+	seconds = elapsed/1000 - minutes*60;
+
+	//Create a string to be printed
+	char *tmpStr;
+	sprintf(str, "Time: %2d:%2.2f", minutes, seconds );
+	//Define the position to start printing
+	glColor3f(0.0,0.0,0.0);
+	glRasterPos2f(windowWidth/2-15*9,windowHeight/2-20);
+	//Print  the first Char with a certain font
+	//glutBitmapLength(font,(unsigned char*)str);
+	tmpStr = str;
+	//Print each of the other Char at time
+
+	while( *tmpStr ){
+			glutBitmapCharacter(font, *tmpStr);
+			tmpStr++;
+	}
+}
+
 void display(void)
 {
 	player->inc_position(gx,0);
@@ -270,7 +306,8 @@ void display(void)
 	if(collisionX || collisionY){
 	 	player->inc_position(-gx,0);
 	 	player->inc_position(0,-gy);
-}
+	}
+
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	arenaOut->draw();
@@ -285,6 +322,8 @@ void display(void)
 		(*it)->draw();
 
 	displayBullets();
+
+	printScore();
 
 	/* Trocar buffers */
 	glutSwapBuffers();
