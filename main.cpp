@@ -13,16 +13,14 @@
 
 using namespace std;
 
-vector<Circle*> enemies;
+vector<Car*> enemies;
 Circle* arenaOut = NULL;
 Circle* arenaIn = NULL;
-Circle* player = NULL;
-Car* playerCar = NULL;
+Car* player = NULL;
 Rect* startEnd = NULL;
 
 GLfloat gx=0,gy=0;
 GLfloat pgx=0,pgy=0;
-GLfloat wheelAngle=0; // Car angle
 int keyStatus[256];
 
 // Deltas to adjust all the coordinates to the new coordinate system
@@ -39,10 +37,6 @@ float PLAYER_SPEED = 0;
 float BULLET_SPEED = 0;
 const float ANGLE_SPEED = 1;
 
-// Global to sabe player and canon's current orientation
-float playerAngle = 0;
-float canonAngle = 0;
-
 // Global to save last mouse position
 float lastMouseX;
 float lastMouseY;
@@ -52,27 +46,6 @@ bool mousePressed;
 
 // List of bullets that have been shot
 list<Bullet*> bullets;
-
-void printGlobals(){
-	cout << "\nArenaOut" << endl;
-	arenaOut->print();
-
-	cout << "\nArenaIn" << endl;
-	arenaIn->print();
-
-	cout << "\nplayer" << endl;
-	player->print();
-
-	cout << "\nstartEnd" << endl;
-	startEnd->print();
-
-	vector<Circle*>::iterator it;
-
-	cout << "\nEnemies" << endl;
-	for(it = enemies.begin();it != enemies.end(); it++){
-		(*it)->print();
-	}
-}
 
 // This function calculates the deltas to adjust all coordinates so the center
 // of the arena is the new origin
@@ -98,11 +71,10 @@ void setNewOrigin(){
 	arenaIn->set_center(origin);
 
 	// Adjust player
-	Point pc = player->get_center();
+	Point pc = player->get_position();
 	pc.x -= dx;
 	pc.y = (windowHeight - pc.y) - dy;
-	player->set_center(pc);
-	playerCar = new Car(PLAYER_SIZE/1.3,RED,YELLOW);
+	player->set_position(pc);
 
 	// Adjust startEnd rectangle
 	Point se = startEnd->get_vertex();
@@ -111,13 +83,13 @@ void setNewOrigin(){
 	startEnd->set_vertex(se);
 
 	// Adjust enemies
-	vector<Circle*>::iterator it;
+	vector<Car*>::iterator it;
 
 	for(it = enemies.begin();it != enemies.end(); it++){
-		Point center = (*it)->get_center();
-		center.x -= dx;
-		center.y = (windowHeight - center.y) - dy;
-		(*it)->set_center(center);
+		Point pos = (*it)->get_position();
+		pos.x -= dx;
+		pos.y = (windowHeight - pos.y) - dy;
+		(*it)->set_position(pos);
 	}
 
 }
@@ -160,20 +132,22 @@ void updateCar(GLdouble timeDiff) {
 
 	float playerSpeed = PLAYER_SPEED*timeDiff;
 	float dx=0,dy=0;
+	float wheelAngle = player->get_wAngle();
+	float playerAngle = player->get_cAngle();
 
 	if((keyStatus['D'] == 1 || keyStatus['d'] == 1) && wheelAngle > -45+ANGLE_SPEED)
-		wheelAngle -= ANGLE_SPEED;
+		player->inc_wAngle(-ANGLE_SPEED);
 
 	if((keyStatus['A'] == 1 || keyStatus['a'] == 1) && wheelAngle < 45-ANGLE_SPEED)
-		wheelAngle += ANGLE_SPEED;
+		player->inc_wAngle(ANGLE_SPEED);
 
 	if( keyStatus['W'] == 1 || keyStatus['w'] == 1 ){
 		if(wheelAngle > 0){
-			wheelAngle -= 1;
-			playerAngle += 1;
+			player->inc_wAngle(-1);
+			player->inc_cAngle(1);
 		}else if(wheelAngle < 0){
-			wheelAngle += 1;
-			playerAngle -= 1;
+			player->inc_wAngle(1);
+			player->inc_cAngle(-1);
 		}
 
 		dy = playerSpeed*cos(M_PI*playerAngle/180.0);
@@ -183,11 +157,11 @@ void updateCar(GLdouble timeDiff) {
 
 	if( keyStatus['S'] == 1 || keyStatus['s'] == 1 ){
 		if(wheelAngle > 0){
-			wheelAngle -= 1;
-			playerAngle -= 1;
+			player->inc_wAngle(-1);
+			player->inc_cAngle(-1);
 		}else if(wheelAngle < 0){
-			wheelAngle += 1;
-			playerAngle += 1;
+			player->inc_wAngle(1);
+			player->inc_cAngle(1);
 		}
 
 		dy = - playerSpeed*cos(M_PI*playerAngle/180.0);
@@ -199,9 +173,9 @@ void updateCar(GLdouble timeDiff) {
 	gx += dx;
 
 	if(dy == 0.0 && dy == 0.0)
-		playerCar->setMoving(false);
+		player->setMoving(false);
 	else
-		playerCar->setMoving(true);
+		player->setMoving(true);
 }
 
 void mouse(int botao, int estado, int x, int y){
@@ -216,8 +190,9 @@ void mouse(int botao, int estado, int x, int y){
 			// In this case the mouse was pressed.
 			// trying to detect a press+release task
 			mousePressed = false;
-			Point carCenter = {player->get_center().x,player->get_center().y};
-			Point canonPosition = playerCar->getBulletInitPos(carCenter,playerAngle,canonAngle);
+			Point canonPosition = player->getBulletInitPos();
+			float playerAngle = player->get_cAngle();
+			float canonAngle = player->get_cnAngle();
 			Bullet* b = new Bullet(canonPosition,GREEN,playerAngle+canonAngle);
 			bullets.push_back(b);
 		}
@@ -228,10 +203,11 @@ void mouse(int botao, int estado, int x, int y){
 
 void passiveMotion(int x, int y){
 
+	float canonAngle = player->get_cnAngle();
 	if(x > lastMouseX && canonAngle > -45+ANGLE_SPEED )
-		canonAngle -= ANGLE_SPEED;
+		player->inc_cnAngle(-ANGLE_SPEED);
 	else if (x < lastMouseX && canonAngle < 45-ANGLE_SPEED)
-		canonAngle += ANGLE_SPEED;
+		player->inc_cnAngle(ANGLE_SPEED);
 
 	lastMouseX = x;
 }
@@ -272,18 +248,12 @@ void idle (void)
 bool player_collided(){
 
 	bool insideArena = player->insideOf(arenaOut) && player->outsideOf(arenaIn);
-	//cout << "insideArena: ";
-	//cout << insideArena << endl;
 
-	vector<Circle*>::iterator it;
+	vector<Car*>::iterator it;
 	bool outsideEnemies = true;
 
 	for(it = enemies.begin();it != enemies.end(); it++)
 		outsideEnemies = outsideEnemies && player->outsideOf( (*it) );
-
-	//cout << "outsideEnemies: ";
-	//cout << outsideEnemies << endl;
-	//cout << endl;
 
 	return !(insideArena && outsideEnemies);
 
@@ -291,15 +261,15 @@ bool player_collided(){
 
 void display(void)
 {
-	player->increment_center(gx,0);
-	player->increment_center(0,gy);
+	player->inc_position(gx,0);
+	player->inc_position(0,gy);
 
 	bool collisionX = player_collided();
 	bool collisionY = player_collided();
 
 	if(collisionX || collisionY){
-	 	player->increment_center(-gx,0);
-	 	player->increment_center(0,-gy);
+	 	player->inc_position(-gx,0);
+	 	player->inc_position(0,-gy);
 }
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -308,11 +278,9 @@ void display(void)
 	Point transPoint = {(startEnd->get_vertex()).x,-(startEnd->get_vertex()).y};
 	startEnd->draw(transPoint);
 
-	//player->draw();
-	Point carCenter = {player->get_center().x,player->get_center().y};
-	playerCar->draw(carCenter,wheelAngle,playerAngle,canonAngle);
+	player->draw();
 
-	vector<Circle*>::iterator it;
+	vector<Car*>::iterator it;
 	for(it = enemies.begin();it != enemies.end(); it++)
 		(*it)->draw();
 

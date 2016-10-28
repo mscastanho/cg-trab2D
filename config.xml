@@ -1,4 +1,5 @@
 <aplicacao>
 	<arquivoDaArena nome="arena" tipo="svg" caminho="./"></arquivoDaArena>
-	<carro velTiro="0.4" velCarro="0.2"></carro>
+	<carro velTiro="0.2" velCarro="0.1"></carro>
 </aplicacao>
+

@@ -19,7 +19,6 @@ class Circle {
 	void draw (float deltaX, float deltaY);
 	Point get_center() const;
 	void set_center(Point c);
-	void increment_center(float dx, float dy);
 	float get_radius() const;
 	void set_radius(float r);
 	Color get_color() const;

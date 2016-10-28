@@ -8,6 +8,7 @@
 
 using namespace std;
 
+const float RADIUS_SIZE_RATIO = 0.65;
 const float BODY_HEIGHT = 1;
 const float BODY_WIDTH = 0.5;
 const float CANON_HEIGHT = 0.2;
@@ -23,16 +24,37 @@ const float EXHAUST_PIPE_HEIGHT = EXHAUST_PIPE_WIDTH;
 
 class Car {
 
+	Point position;
 	float size;
   Color bodyColor;
   Color styleColor;
 	bool moving;
+	float radius;
+	float carAngle;
+	float canonAngle;
+	float wheelAngle;
 
   public:
-  Car(float size, Color bodyColor, Color styleColor);
-  void draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonAngle);
-	Point getBulletInitPos (Point pos, float carAngle, float canonAngle);
+  Car(Point pos, float radius, Color c, float cAng, float cnAng, float wAng);
+
 	void setMoving(bool status);
+	Point get_position();
+	void set_position(Point pos);
+	void inc_position(float dx, float dy);
+	float get_wAngle();
+	void inc_wAngle(float da);
+	float get_cAngle();
+	void inc_cAngle(float da);
+	float get_cnAngle();
+	void inc_cnAngle(float da);
+
+	void draw ();
+
+	Point getBulletInitPos ();
+
+	bool outsideOf(Car* c) const;
+	bool outsideOf(Circle* c) const;
+	bool insideOf(Circle* c) const;
 };
 
 #endif /* CAR_H_ */

@@ -15,11 +15,10 @@
 using namespace tinyxml2;
 using namespace std;
 
-extern vector<Circle*> enemies;
+extern vector<Car*> enemies;
 extern Circle* arenaOut;
 extern Circle* arenaIn;
-extern Circle* player;
-extern Car* playerCar;
+extern Car* player;
 extern Rect* startEnd;
 extern float PLAYER_SPEED;
 extern float BULLET_SPEED;
@@ -100,11 +99,13 @@ void parseCircle(XMLElement* c){
         arenaOut = circle;
       }
     }
-  }else if(id == "Inimigo")
-    enemies.push_back(circle);
-  else if(id == "Jogador"){
-    player = circle;
-    PLAYER_SIZE = circle->get_radius()*2;
+  }else if(id == "Inimigo"){
+    Car* enemy = new Car(center,r,RED,0,0,0);
+    enemies.push_back(enemy);
+
+  }else if(id == "Jogador"){
+    player = new Car(center,r,GREEN,0,0,0);
+
   }
 }
 

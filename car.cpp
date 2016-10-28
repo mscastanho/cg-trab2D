@@ -10,19 +10,64 @@
 #include "car.h"
 #include "bullet.h"
 
-Car::Car(float size, Color bodyColor, Color styleColor){
-  this->size = size;
-  this->bodyColor = bodyColor;
-  this->styleColor = styleColor;
+Car::Car(Point pos, float radius, Color c, float cAng, float cnAng, float wAng){
+  this->position = pos;
+  this->bodyColor = c;
   this->moving = false;
+  this->radius = radius;
+  this->size = radius/RADIUS_SIZE_RATIO;
+  this->carAngle = cAng;
+  this->canonAngle = cnAng;
+  this->wheelAngle = wAng;
 }
 
-void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonAngle){
+void Car::setMoving(bool status){
+  this->moving = status;
+}
+
+Point Car::get_position(){
+	return this->position;
+}
+
+void Car::set_position(Point pos){
+	this->position = pos;
+}
+
+float Car::get_wAngle(){
+	return this->wheelAngle;
+}
+
+void Car::inc_wAngle(float da){
+	this->wheelAngle += da;
+}
+
+float Car::get_cAngle(){
+	return this->carAngle;
+}
+
+void Car::inc_cAngle(float da){
+	this->carAngle += da;
+}
+
+float Car::get_cnAngle(){
+	return this->canonAngle;
+}
+
+void Car::inc_cnAngle(float da){
+	this->canonAngle += da;
+}
+
+void Car::inc_position(float dx, float dy){
+	this->position.x += dx;
+	this->position.y += dy;
+}
+
+void Car::draw (){
 
   glPushMatrix();
 
-  glTranslatef(position.x,position.y,0);
-  glRotatef(carAngle,0,0,1.0);
+  glTranslatef(this->position.x,this->position.y,0);
+  glRotatef(this->carAngle,0,0,1.0);
   Color color;
   float L = this->size;
 
@@ -52,13 +97,13 @@ void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonA
   //Front Wheels
   glPushMatrix();
   glTranslatef(bWidth/2+waWidth+wWidth/2,axisMidY,0);
-  glRotatef(wAngle,0,0,1.0);
+  glRotatef(this->wheelAngle,0,0,1.0);
   drawRect(wWidth,wHeight,color,-wWidth/2,-wHeight/2);
   glPopMatrix();
 
   glPushMatrix();
   glTranslatef(-(bWidth/2+waWidth+wWidth/2),axisMidY,0);
-  glRotatef(wAngle,0,0,1.0);
+  glRotatef(this->wheelAngle,0,0,1.0);
   drawRect(wWidth,wHeight,color,-wWidth/2,-wHeight/2);
   glPopMatrix();
 
@@ -70,7 +115,7 @@ void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonA
   // Canon (need to draw canon first to be behind the body)
   glPushMatrix();
   glTranslatef(0,bHeight/2,0);
-  glRotatef(canonAngle,0,0,1.0);
+  glRotatef(this->canonAngle,0,0,1.0);
   color = YELLOW;
   float cWidth = CANON_WIDTH*L;
   float cHeight = CANON_HEIGHT*L;
@@ -124,7 +169,7 @@ void Car::draw (Point position, GLfloat wAngle, GLfloat carAngle, GLfloat canonA
 }
 
 // This function returns the coordinates of a bullet leaving the canon
-Point Car::getBulletInitPos (Point carPos, float carAngle, float canonAngle){
+Point Car::getBulletInitPos (){
 
   Point pCanon = {0,0};
 
@@ -133,21 +178,87 @@ Point Car::getBulletInitPos (Point carPos, float carAngle, float canonAngle){
   pCanon = translateFrom(pCanon,canonEndPos);
 
   // Rotate by the canon's rotation
-  pCanon = rotateBy(pCanon,canonAngle);
+  pCanon = rotateBy(pCanon,this->canonAngle);
 
   // Translate from canon position
   Point canonPos = {0,BODY_HEIGHT*this->size/2};
   pCanon = translateFrom(pCanon,canonPos);
 
   // Rotate by the car's rotation
-  pCanon = rotateBy(pCanon,carAngle);
+  pCanon = rotateBy(pCanon,this->carAngle);
 
   // First translate from car position
-  pCanon = translateFrom(pCanon,carPos);
+  pCanon = translateFrom(pCanon,this->position);
 
   return pCanon;
 }
 
-void Car::setMoving(bool status){
-  this->moving = status;
+// This function calculates if a collision has occurred between this and another
+// circle. If one circle is inside another, they have collided.
+bool Car::outsideOf(Car* c) const{
+	float x1,x2,y1,y2,r1,r2;
+
+	x1 = this->position.x;
+	y1 = this->position.y;
+	r1 = this->radius;
+
+	x2 = c->position.x;
+	y2 = c->position.y;
+	r2 = c->radius;
+
+
+
+	float dist = sqrt(pow(x1-x2,2) + pow(y1-y2,2));
+
+	if(dist >= r1 + r2)
+		return true;
+	else
+		return false;
+}
+
+bool Car::outsideOf(Circle* c) const{
+	float x1,x2,y1,y2,r1,r2;
+
+	x1 = this->position.x;
+	y1 = this->position.y;
+	r1 = this->radius;
+
+  Point ccenter = c->get_center();
+  float cradius = c->get_radius();
+
+	x2 = ccenter.x;
+	y2 = ccenter.y;
+	r2 = cradius;
+
+	float dist = sqrt(pow(x1-x2,2) + pow(y1-y2,2));
+
+	if(dist >= r1 + r2)
+		return true;
+	else
+		return false;
+}
+
+// This function calculates if a collision has occurred between this and another
+// circle. In this case a collision only occurs if this circle is partially or
+// completely outside of the circle c
+bool Car::insideOf(Circle* c) const{
+	float x1,x2,y1,y2,r1,r2;
+
+	x1 = this->position.x;
+	y1 = this->position.y;
+	r1 = this->radius;
+
+  Point ccenter = c->get_center();
+  float cradius = c->get_radius();
+
+	x2 = ccenter.x;
+	y2 = ccenter.y;
+	r2 = cradius;
+
+	float dist = sqrt(pow(x1-x2,2) + pow(y1-y2,2));
+
+	if(dist <= r2 - r1)
+		return true;
+	else
+		return false;
 }

@@ -71,11 +71,6 @@ void Circle::set_center(Point c){
 	this->center = c;
 }
 
-void Circle::increment_center(float dx, float dy){
-	this->center.x += dx;
-	this->center.y += dy;
-}
-
 float Circle::get_radius() const{
 	return this->radius;
 }
@@ -91,53 +86,6 @@ Color Circle::get_color() const{
 void Circle::set_color(Color c){
 	this->color = c;
 }
-
-// This function calculates if a collision has occurred between this and another
-// circle. If one circle is inside another, they have collided.
-bool Circle::outsideOf(Circle* c) const{
-	float x1,x2,y1,y2,r1,r2;
-
-	x1 = this->center.x;
-	y1 = this->center.y;
-	r1 = this->radius;
-
-	x2 = c->center.x;
-	y2 = c->center.y;
-	r2 = c->radius;
-
-
-
-	float dist = sqrt(pow(x1-x2,2) + pow(y1-y2,2));
-
-	if(dist >= r1 + r2)
-		return true;
-	else
-		return false;
-}
-
-// This function calculates if a collision has occurred between this and another
-// circle. In this case a collision only occurs if this circle is partially or
-// completely outside of the circle c
-bool Circle::insideOf(Circle* c) const{
-	float x1,x2,y1,y2,r1,r2;
-
-	x1 = this->center.x;
-	y1 = this->center.y;
-	r1 = this->radius;
-
-	x2 = c->center.x;
-	y2 = c->center.y;
-	r2 = c->radius;
-
-	float dist = sqrt(pow(x1-x2,2) + pow(y1-y2,2));
-
-	if(dist <= r2 - r1)
-		return true;
-	else
-		return false;
-}
-
-
 
 void Circle::print() const{
 

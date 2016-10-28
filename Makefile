@@ -6,8 +6,8 @@ compila:
 	g++ -c rect.cpp -lGL -lGLU -lglut
 	g++ -c circle.cpp -lGL -lGLU -lglut -lm
 	g++ -c bullet.cpp -lGL -lGLU -lglut -lm
-	g++ -c car.cpp misc.o -lGL -lGLU -lglut
-	g++ -c input.cpp tinyxml2.o
+	g++ -c car.cpp -lGL -lGLU -lglut
+	g++ -c input.cpp
 	g++ main.cpp -o trabalhocg tinyxml2.o misc.o rect.o circle.o bullet.o car.o input.o -lGL -lGLU -lglut -lm
 
 clean:
