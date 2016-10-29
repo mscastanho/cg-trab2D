@@ -232,6 +232,21 @@ void keyPress(unsigned char key, int x, int y)
 	keyStatus[key] = 1;
 }
 
+// Check if any of element of a list of bullets has hit a car
+bool checkBulletHit(list<Bullet*>* bullets, Car* car) {
+		list<Bullet*>::iterator it;
+		bool notHit = true;
+
+		for(it = bullets->begin() ; it != bullets->end() ; it++)
+				notHit = notHit && car->outsideOf( (*it) );
+
+		return !notHit;
+}
+
+void printEndGameMessage(){
+
+}
+
 void idle (void)
 {
 	static GLdouble previousTime = 0;
@@ -252,6 +267,21 @@ void idle (void)
 	updateCar(timeDifference);
 	controlEnemyShots();
 	updateBullets(timeDifference);
+
+	bool playerHit = checkBulletHit(&enemy_bullets,player);
+
+	if(playerHit)
+		printEndGameMessage();
+		
+	vector<Car*>::iterator it;
+
+	for(it = enemies.begin() ; it != enemies.end() ; ){
+			if(checkBulletHit(&player_bullets,(*it)))
+				it = enemies.erase(it);
+			else
+				it++;
+	}
+
 	glutPostRedisplay();
 
 }

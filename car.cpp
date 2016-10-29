@@ -241,6 +241,28 @@ bool Car::outsideOf(Circle* c) const{
 		return false;
 }
 
+bool Car::outsideOf(Bullet* b) const{
+	float x1,x2,y1,y2,r1,r2;
+
+	x1 = this->position.x;
+	y1 = this->position.y;
+	r1 = this->radius;
+
+  Point bcenter = b->get_position();
+  float bradius = BULLET_RADIUS;
+
+	x2 = bcenter.x;
+	y2 = bcenter.y;
+	r2 = bradius;
+
+	float dist = sqrt(pow(x1-x2,2) + pow(y1-y2,2));
+
+	if(dist >= r1 + r2)
+		return true;
+	else
+		return false;
+}
+
 // This function calculates if a collision has occurred between this and another
 // circle. In this case a collision only occurs if this circle is partially or
 // completely outside of the circle c

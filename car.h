@@ -3,6 +3,7 @@
 
 #include <GL/glut.h>
 #include "misc.h"
+#include "bullet.h"
 #include <iostream>
 #include <stdio.h>
 
@@ -54,6 +55,7 @@ class Car {
 
 	bool outsideOf(Car* c) const;
 	bool outsideOf(Circle* c) const;
+	bool outsideOf(Bullet* b) const;
 	bool insideOf(Circle* c) const;
 
 	Point update(bool w, bool s, bool a, bool d, GLdouble timeDiff);
