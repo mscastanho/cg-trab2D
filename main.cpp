@@ -34,8 +34,11 @@ float windowWidth;
 // Constants for player and bullets
 float PLAYER_SIZE = 0;
 float PLAYER_SPEED = 0;
-float BULLET_SPEED = 0;
-const float ANGLE_SPEED = 1;
+float PLAYER_BULLET_SPEED = 0;
+float ANGLE_SPEED = 1;
+float ENEMY_SPEED = 0;
+float ENEMY_SHOT_FREQ = 0;
+float ENEMY_BULLET_SPEED = 0;
 
 // Global to save last mouse position
 float lastMouseX;
@@ -44,8 +47,9 @@ float lastMouseY;
 // Global to save the mouse status
 bool mousePressed;
 
-// List of bullets that have been shot
-list<Bullet*> bullets;
+// List of player bullets that have been shot
+list<Bullet*> player_bullets;
+list<Bullet*> enemy_bullets;
 
 // Text variable
 static char str[2000];
@@ -111,75 +115,78 @@ bool isOutsideWindow(Bullet* b){
 	return cond1 || cond2 || cond3 || cond4;
 }
 
+void controlEnemyShots(){
+	static GLdouble previousTime = 0;
+	GLdouble currentTime;
+	GLdouble timeDifference;
+	GLdouble shotPeriod = 1/ENEMY_SHOT_FREQ;
+	vector<Car*>::iterator it;
+
+	// Get time from the beginning of the game
+	currentTime = glutGet(GLUT_ELAPSED_TIME);
+	timeDifference = currentTime - previousTime;
+
+	if (timeDifference > shotPeriod){
+		previousTime = currentTime;
+
+		for(it = enemies.begin() ; it != enemies.end() ; it++){
+
+			Point canonPosition = (*it)->getBulletInitPos();
+			float playerAngle = (*it)->get_cAngle();
+			float canonAngle = (*it)->get_cnAngle();
+			Bullet* b = new Bullet(canonPosition,RED,playerAngle+canonAngle);
+			enemy_bullets.push_back(b);
+		}
+	}
+}
+
 void updateBullets(GLdouble timeDiff){
 
 	list<Bullet*>::iterator it;
 	list<int> toDelete;
 	int i;
-	float bulletSpeed = BULLET_SPEED*timeDiff;
+	float playerBulletSpeed = PLAYER_BULLET_SPEED*timeDiff;
+	float enemyBulletSpeed = ENEMY_BULLET_SPEED*timeDiff;
 
 	//Update bullets
-	for(it = bullets.begin(), i = 0;it != bullets.end(); it++, i++)
-		(*it)->update(bulletSpeed);
+	for(it = player_bullets.begin(), i = 0;it != player_bullets.end(); it++, i++)
+		(*it)->update(playerBulletSpeed);
 
-		bullets.remove_if(isOutsideWindow);
+	for(it = enemy_bullets.begin(), i = 0;it != enemy_bullets.end(); it++, i++)
+		(*it)->update(enemyBulletSpeed);
+
+	player_bullets.remove_if(isOutsideWindow);
+	enemy_bullets.remove_if(isOutsideWindow);
 }
 
 void displayBullets(){
 	list<Bullet*>::iterator it;
 
-	for(it = bullets.begin();it != bullets.end(); it++)
+	for(it = player_bullets.begin();it != player_bullets.end(); it++)
+		(*it)->draw();
+
+	for(it = enemy_bullets.begin();it != enemy_bullets.end(); it++)
 		(*it)->draw();
 }
 
 void updateCar(GLdouble timeDiff) {
 
-	float playerSpeed = PLAYER_SPEED*timeDiff;
-	float dx=0,dy=0;
 	float wheelAngle = player->get_wAngle();
-	float playerAngle = player->get_cAngle();
+	bool wPressed, sPressed, aPressed, dPressed;
 
-	if((keyStatus['D'] == 1 || keyStatus['d'] == 1) && wheelAngle > -45+ANGLE_SPEED)
-		player->inc_wAngle(-ANGLE_SPEED);
+	dPressed = (keyStatus['D'] == 1 || keyStatus['d'] == 1) && wheelAngle > -45+ANGLE_SPEED;
 
-	if((keyStatus['A'] == 1 || keyStatus['a'] == 1) && wheelAngle < 45-ANGLE_SPEED)
-		player->inc_wAngle(ANGLE_SPEED);
+	aPressed = (keyStatus['A'] == 1 || keyStatus['a'] == 1) && wheelAngle < 45-ANGLE_SPEED;
 
-	if( keyStatus['W'] == 1 || keyStatus['w'] == 1 ){
-		if(wheelAngle > 0){
-			player->inc_wAngle(-1);
-			player->inc_cAngle(1);
-		}else if(wheelAngle < 0){
-			player->inc_wAngle(1);
-			player->inc_cAngle(-1);
-		}
+	wPressed = keyStatus['W'] == 1 || keyStatus['w'] == 1;
 
-		dy = playerSpeed*cos(M_PI*playerAngle/180.0);
-		dx = -playerSpeed*sin(M_PI*playerAngle/180.0);
+	sPressed = keyStatus['S'] == 1 || keyStatus['s'] == 1;
 
-	}
+	Point delta = player->update(wPressed,sPressed,aPressed,dPressed,timeDiff);
 
-	if( keyStatus['S'] == 1 || keyStatus['s'] == 1 ){
-		if(wheelAngle > 0){
-			player->inc_wAngle(-1);
-			player->inc_cAngle(-1);
-		}else if(wheelAngle < 0){
-			player->inc_wAngle(1);
-			player->inc_cAngle(1);
-		}
+	gy += delta.y;
+	gx += delta.x;
 
-		dy = - playerSpeed*cos(M_PI*playerAngle/180.0);
-		dx = +playerSpeed*sin(M_PI*playerAngle/180.0);
-
-	}
-
-	gy += dy;
-	gx += dx;
-
-	if(dy == 0.0 && dy == 0.0)
-		player->setMoving(false);
-	else
-		player->setMoving(true);
 }
 
 void mouse(int botao, int estado, int x, int y){
@@ -198,7 +205,7 @@ void mouse(int botao, int estado, int x, int y){
 			float playerAngle = player->get_cAngle();
 			float canonAngle = player->get_cnAngle();
 			Bullet* b = new Bullet(canonPosition,GREEN,playerAngle+canonAngle);
-			bullets.push_back(b);
+			player_bullets.push_back(b);
 		}
 	}
 
@@ -241,7 +248,9 @@ void idle (void)
 	pgx = gx;
 	pgy = gy;
 
+
 	updateCar(timeDifference);
+	controlEnemyShots();
 	updateBullets(timeDifference);
 	glutPostRedisplay();
 

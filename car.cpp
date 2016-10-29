@@ -10,6 +10,9 @@
 #include "car.h"
 #include "bullet.h"
 
+extern float PLAYER_SPEED;
+extern float ANGLE_SPEED;
+
 Car::Car(Point pos, float radius, Color c, float cAng, float cnAng, float wAng){
   this->position = pos;
   this->bodyColor = c;
@@ -261,4 +264,59 @@ bool Car::insideOf(Circle* c) const{
 		return true;
 	else
 		return false;
+}
+
+//Parameters:
+// w,s,a,d: tell if the corresponding keys are pressed in the keyboard
+// timeDiff: time elapsed since last function call
+// Returns a Point with x and y deltas that should be applied to the car
+Point Car::update(bool w, bool s, bool a, bool d, GLdouble timeDiff) {
+
+	float playerSpeed = PLAYER_SPEED*timeDiff;
+	float dx=0,dy=0;
+	float wheelAngle = this->wheelAngle;
+	float playerAngle = this->carAngle;
+
+	if( d && wheelAngle > -45+ANGLE_SPEED)
+		this->wheelAngle -= ANGLE_SPEED;
+
+	if( a && wheelAngle < 45-ANGLE_SPEED)
+		this->wheelAngle += ANGLE_SPEED;
+
+	if( w ){
+		if(wheelAngle > 0){
+      this->wheelAngle -= 1;
+      this->carAngle += 1;
+		}else if(wheelAngle < 0){
+      this->wheelAngle += 1;
+      this->carAngle -= 1;
+		}
+
+		dy = playerSpeed*cos(M_PI*playerAngle/180.0);
+		dx = -playerSpeed*sin(M_PI*playerAngle/180.0);
+
+	}
+
+	if( s ){
+		if(wheelAngle > 0){
+      this->wheelAngle -= 1;
+      this->carAngle -= 1;
+		}else if(wheelAngle < 0){
+      this->wheelAngle += 1;
+      this->carAngle += 1;
+		}
+
+		dy = - playerSpeed*cos(M_PI*playerAngle/180.0);
+		dx = +playerSpeed*sin(M_PI*playerAngle/180.0);
+
+	}
+
+	if(dy == 0.0 && dy == 0.0)
+	 this->moving = false;
+	else
+	 this->moving = true;
+
+  Point p = {dx,dy};
+
+  return p;
 }

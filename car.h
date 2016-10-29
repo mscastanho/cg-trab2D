@@ -55,6 +55,9 @@ class Car {
 	bool outsideOf(Car* c) const;
 	bool outsideOf(Circle* c) const;
 	bool insideOf(Circle* c) const;
+
+	Point update(bool w, bool s, bool a, bool d, GLdouble timeDiff);
+
 };
 
 #endif /* CAR_H_ */

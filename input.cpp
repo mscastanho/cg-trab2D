@@ -22,8 +22,11 @@ extern Circle* arenaIn;
 extern Car* player;
 extern Rect* startEnd;
 extern float PLAYER_SPEED;
-extern float BULLET_SPEED;
+extern float PLAYER_BULLET_SPEED;
 extern float PLAYER_SIZE;
+extern float ENEMY_SPEED;
+extern float ENEMY_SHOT_FREQ;
+extern float ENEMY_BULLET_SPEED;
 
 string parseConfigFile (string filePath){
 
@@ -46,7 +49,17 @@ string parseConfigFile (string filePath){
     XMLElement* carElement = configFile.FirstChildElement("aplicacao")->FirstChildElement("carro");
 
     carElement->QueryFloatAttribute("velCarro",&PLAYER_SPEED);
-    carElement->QueryFloatAttribute("velTiro",&BULLET_SPEED);
+    carElement->QueryFloatAttribute("velTiro",&PLAYER_BULLET_SPEED);
+
+    XMLElement* enemyElement = configFile.FirstChildElement("aplicacao")->FirstChildElement("carroInimigo");
+
+    enemyElement->QueryFloatAttribute("freqTiro",&ENEMY_SHOT_FREQ);
+    enemyElement->QueryFloatAttribute("velCarro",&ENEMY_SPEED);
+    enemyElement->QueryFloatAttribute("velTiro",&ENEMY_BULLET_SPEED);
+
+    cout << ENEMY_SHOT_FREQ << endl;
+    cout << ENEMY_SPEED << endl;
+    cout << ENEMY_BULLET_SPEED << endl;
 
     return path + name + "." + type;
   }
