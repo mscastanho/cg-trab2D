@@ -57,10 +57,6 @@ string parseConfigFile (string filePath){
     enemyElement->QueryFloatAttribute("velCarro",&ENEMY_SPEED);
     enemyElement->QueryFloatAttribute("velTiro",&ENEMY_BULLET_SPEED);
 
-    cout << ENEMY_SHOT_FREQ << endl;
-    cout << ENEMY_SPEED << endl;
-    cout << ENEMY_BULLET_SPEED << endl;
-
     return path + name + "." + type;
   }
 

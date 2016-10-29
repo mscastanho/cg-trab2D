@@ -52,8 +52,22 @@ list<Bullet*> player_bullets;
 list<Bullet*> enemy_bullets;
 
 // Text variable
-static char str[2000];
+static char str[32];
+static char str2[16];
 void * font = GLUT_BITMAP_9_BY_15;
+void * playerWonFont = GLUT_BITMAP_TIMES_ROMAN_24;
+
+// Says whether the game has started or not
+bool gameStarted = false;
+
+// Says if the game is over
+bool gameOver = false;
+
+// Says if the player has won or lost
+bool playerWon;
+
+// States if the player has already crossed the checkpoint
+bool crossedCheckpoint = false;
 
 // This function calculates the deltas to adjust all coordinates so the center
 // of the arena is the new origin
@@ -122,20 +136,22 @@ void controlEnemyShots(){
 	GLdouble shotPeriod = 1/ENEMY_SHOT_FREQ;
 	vector<Car*>::iterator it;
 
-	// Get time from the beginning of the game
-	currentTime = glutGet(GLUT_ELAPSED_TIME);
-	timeDifference = currentTime - previousTime;
+	if(gameStarted){
+		// Get time from the beginning of the game
+		currentTime = glutGet(GLUT_ELAPSED_TIME);
+		timeDifference = currentTime - previousTime;
 
-	if (timeDifference > shotPeriod){
-		previousTime = currentTime;
+		if (timeDifference > shotPeriod){
+			previousTime = currentTime;
 
-		for(it = enemies.begin() ; it != enemies.end() ; it++){
+			for(it = enemies.begin() ; it != enemies.end() ; it++){
 
-			Point canonPosition = (*it)->getBulletInitPos();
-			float playerAngle = (*it)->get_cAngle();
-			float canonAngle = (*it)->get_cnAngle();
-			Bullet* b = new Bullet(canonPosition,RED,playerAngle+canonAngle);
-			enemy_bullets.push_back(b);
+				Point canonPosition = (*it)->getBulletInitPos();
+				float playerAngle = (*it)->get_cAngle();
+				float canonAngle = (*it)->get_cnAngle();
+				Bullet* b = new Bullet(canonPosition,RED,playerAngle+canonAngle);
+				enemy_bullets.push_back(b);
+			}
 		}
 	}
 }
@@ -182,11 +198,14 @@ void updateCar(GLdouble timeDiff) {
 
 	sPressed = keyStatus['S'] == 1 || keyStatus['s'] == 1;
 
+
 	Point delta = player->update(wPressed,sPressed,aPressed,dPressed,timeDiff);
 
 	gy += delta.y;
 	gx += delta.x;
 
+	if(!gameStarted && wPressed)
+		gameStarted = true;
 }
 
 void mouse(int botao, int estado, int x, int y){
@@ -245,6 +264,26 @@ bool checkBulletHit(list<Bullet*>* bullets, Car* car) {
 
 void printEndGameMessage(){
 
+	//Create a string to be printed
+	char *tmpStr;
+	if(playerWon)
+		sprintf(str2, "YOU WON!!!!");
+	else
+		sprintf(str2, "YOU LOST!!!");
+
+	//Define the position to start printing
+	glColor3f(1.0,0.0,0.0);
+	glRasterPos2f(-5*12,-12);
+	//Print  the first Char with a certain font
+	//glutBitmapLength(font,(unsigned char*)str);
+	tmpStr = str2;
+	//Print each of the other Char at time
+
+	while( *tmpStr ){
+			glutBitmapCharacter(playerWonFont, *tmpStr);
+			tmpStr++;
+	}
+
 }
 
 void idle (void)
@@ -270,9 +309,11 @@ void idle (void)
 
 	bool playerHit = checkBulletHit(&enemy_bullets,player);
 
-	if(playerHit)
-		printEndGameMessage();
-		
+	if(playerHit){
+		gameOver = true;
+		playerWon = false; // player lost
+	}
+
 	vector<Car*>::iterator it;
 
 	for(it = enemies.begin() ; it != enemies.end() ; ){
@@ -302,40 +343,74 @@ bool player_collided(){
 
 }
 
-void printScore(){
+void printTimer(){
 
 	static GLdouble initTime = 0;
-	static int minutes;
-	GLdouble seconds;
+	static int minutes = 0;
+	static GLdouble seconds = 0;
 	GLdouble currentTime;
 	GLdouble elapsed;
 
-	// Get time from the beginning of the game
-	currentTime = glutGet(GLUT_ELAPSED_TIME);
 
-	elapsed = currentTime - initTime;
-	minutes = (int) elapsed/60000;
-	seconds = elapsed/1000 - minutes*60;
+		if(gameStarted && !gameOver){
+			// Get time from the beginning of the game
+			currentTime = glutGet(GLUT_ELAPSED_TIME);
 
-	//Create a string to be printed
-	char *tmpStr;
-	sprintf(str, "Time: %2d:%2.2f", minutes, seconds );
-	//Define the position to start printing
-	glColor3f(0.0,0.0,0.0);
-	glRasterPos2f(windowWidth/2-15*9,windowHeight/2-20);
-	//Print  the first Char with a certain font
-	//glutBitmapLength(font,(unsigned char*)str);
-	tmpStr = str;
-	//Print each of the other Char at time
+			elapsed = currentTime - initTime;
+			minutes = (int) elapsed/60000;
+			seconds = elapsed/1000 - minutes*60;
+		}
 
-	while( *tmpStr ){
-			glutBitmapCharacter(font, *tmpStr);
-			tmpStr++;
+		//Create a string to be printed
+		char *tmpStr;
+		sprintf(str, "Time: %2d:%2.2f", minutes, seconds );
+		//Define the position to start printing
+		glColor3f(0.0,0.0,0.0);
+		glRasterPos2f(windowWidth/2-15*9,windowHeight/2-20);
+		//Print  the first Char with a certain font
+		//glutBitmapLength(font,(unsigned char*)str);
+		tmpStr = str;
+		//Print each of the other Char at time
+
+		while( *tmpStr ){
+				glutBitmapCharacter(font, *tmpStr);
+				tmpStr++;
+		}
+}
+
+bool checkCheckpoint (Point oldPos, Point newPos){
+	float innerRadius = arenaIn->get_radius();
+	float outerRadius = arenaOut->get_radius();
+
+	if((oldPos.x > -outerRadius) && (newPos.x > -outerRadius)){
+		if((oldPos.x < -innerRadius) && (newPos.x < -innerRadius)){
+			if((oldPos.y > 0) && (newPos.y < 0))
+				return true; //crossed the checkpoint
+		}
 	}
+
+	return false;
+}
+
+bool crossedFinishLine (Point oldPos, Point newPos){
+	float innerRadius = arenaIn->get_radius();
+	float outerRadius = arenaOut->get_radius();
+
+	if((oldPos.x < outerRadius) && (newPos.x < outerRadius)){
+		if((oldPos.x > innerRadius) && (newPos.x > innerRadius)){
+			if((oldPos.y < 0) && (newPos.y > 0))
+				return true; //crossed the finish line
+		}
+	}
+
+	return false;
 }
 
 void display(void)
 {
+
+	Point oldPos = player->get_position();
+
 	player->inc_position(gx,0);
 	player->inc_position(0,gy);
 
@@ -345,6 +420,15 @@ void display(void)
 	if(collisionX || collisionY){
 	 	player->inc_position(-gx,0);
 	 	player->inc_position(0,-gy);
+	}
+
+	Point newPos = player->get_position();
+
+	if(!crossedCheckpoint){
+		crossedCheckpoint = checkCheckpoint(oldPos,newPos);
+	}else if(crossedFinishLine(oldPos,newPos)){
+		gameOver = true;
+		playerWon = true;
 	}
 
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -362,7 +446,10 @@ void display(void)
 
 	displayBullets();
 
-	printScore();
+	printTimer();
+
+	if(gameOver)
+		printEndGameMessage();
 
 	/* Trocar buffers */
 	glutSwapBuffers();
