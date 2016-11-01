@@ -113,7 +113,7 @@ void setNewOrigin(){
 		pos.x -= dx;
 		pos.y = (windowHeight - pos.y) - dy;
 		(*it)->set_position(pos);
-		float angle = (atan2(pos.y,pos.x)+M_PI)*180/M_PI;
+		float angle = atan2(pos.y,pos.x)*180/M_PI;
 		(*it)->set_cAngle(angle);
 		cout << angle << endl;
 	}
@@ -161,26 +161,28 @@ void controlEnemyShots(){
 }
 
 void updateEnemies(GLdouble timeDiff){
-	float dy,dx;
-	vector<Car*>::iterator it;
+	vector<Car*>::iterator it = enemies.begin();
 	Point oldPos, newPos;
 	float enemySpeed = ENEMY_SPEED*timeDiff;
 	float R; //trajectory radius
-	float oldAngle, newAngle;
-	float newX,newY;
+	float oldAngle;
 
 	for(it = enemies.begin() ; it != enemies.end() ; it++){
 		oldPos = (*it)->get_position();
-		R = sqrt(oldPos.x*oldPos.x + oldPos.y*oldPos.y);
-		oldAngle = (*it)->get_cAngle();
-		newAngle = oldAngle + enemySpeed*180/(R*M_PI);
+		R = 100;//sqrt(oldPos.x*oldPos.x + oldPos.y*oldPos.y);
+		oldAngle = atan2(oldPos.y,oldPos.x);
+		cout << oldAngle << endl;
+		//newAngle = (oldAngle + enemySpeed/(2*R*M_PI))*180/M_PI;
 		//cout << newAngle << endl;
-		newPos.x = R*cos(newAngle);
-		newPos.y = R*sin(newAngle);
+		//newPos.x = R*cos(newAngle);
+		//newPos.y = R*sin(newAngle);
+		newPos.x = oldPos.x + R*enemySpeed*cos(oldAngle+M_PI/2);
+		newPos.y = oldPos.y + R*enemySpeed*sin(oldAngle+M_PI/2);
 
 		(*it)->set_position(newPos);
 		//(*it)->set_cAngle(atan2(newPos.y,newPos.x)*180/M_PI);
 	}
+
 
 
 }
@@ -322,7 +324,6 @@ void idle (void)
 	static GLdouble previousTime = 0;
 	GLdouble currentTime;
 	GLdouble timeDifference;
-	float deltaX, deltaY;
 
 	// Get time from the beginning of the game
 	currentTime = glutGet(GLUT_ELAPSED_TIME);
