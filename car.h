@@ -45,6 +45,7 @@ class Car {
 	float get_wAngle();
 	void inc_wAngle(float da);
 	float get_cAngle();
+	void set_cAngle(float angle);
 	void inc_cAngle(float da);
 	float get_cnAngle();
 	void inc_cnAngle(float da);

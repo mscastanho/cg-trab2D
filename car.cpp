@@ -48,6 +48,10 @@ float Car::get_cAngle(){
 	return this->carAngle;
 }
 
+void Car::set_cAngle(float angle){
+	this->carAngle = angle;
+}
+
 void Car::inc_cAngle(float da){
 	this->carAngle += da;
 }

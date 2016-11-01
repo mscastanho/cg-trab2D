@@ -111,8 +111,8 @@ void parseCircle(XMLElement* c){
     }
   }else if(id == "Inimigo"){
 
-    int randomAngle = rand()%360;
-    Car* enemy = new Car(center,r,RED,randomAngle,0,0);
+    //We define an enemy's initial angle later
+    Car* enemy = new Car(center,r,RED,0,0,0);
     enemies.push_back(enemy);
 
   }else if(id == "Jogador"){

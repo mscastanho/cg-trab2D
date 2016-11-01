@@ -31,7 +31,7 @@ float dy = 0;
 float windowHeight;
 float windowWidth;
 
-// Constants for player and bullets
+// Constants for player, enemies and bullets
 float PLAYER_SIZE = 0;
 float PLAYER_SPEED = 0;
 float PLAYER_BULLET_SPEED = 0;
@@ -59,6 +59,7 @@ void * playerWonFont = GLUT_BITMAP_TIMES_ROMAN_24;
 
 // Says whether the game has started or not
 bool gameStarted = false;
+GLdouble timeGameStarted;
 
 // Says if the game is over
 bool gameOver = false;
@@ -112,6 +113,9 @@ void setNewOrigin(){
 		pos.x -= dx;
 		pos.y = (windowHeight - pos.y) - dy;
 		(*it)->set_position(pos);
+		float angle = (atan2(pos.y,pos.x)+M_PI)*180/M_PI;
+		(*it)->set_cAngle(angle);
+		cout << angle << endl;
 	}
 
 }
@@ -154,6 +158,31 @@ void controlEnemyShots(){
 			}
 		}
 	}
+}
+
+void updateEnemies(GLdouble timeDiff){
+	float dy,dx;
+	vector<Car*>::iterator it;
+	Point oldPos, newPos;
+	float enemySpeed = ENEMY_SPEED*timeDiff;
+	float R; //trajectory radius
+	float oldAngle, newAngle;
+	float newX,newY;
+
+	for(it = enemies.begin() ; it != enemies.end() ; it++){
+		oldPos = (*it)->get_position();
+		R = sqrt(oldPos.x*oldPos.x + oldPos.y*oldPos.y);
+		oldAngle = (*it)->get_cAngle();
+		newAngle = oldAngle + enemySpeed*180/(R*M_PI);
+		//cout << newAngle << endl;
+		newPos.x = R*cos(newAngle);
+		newPos.y = R*sin(newAngle);
+
+		(*it)->set_position(newPos);
+		//(*it)->set_cAngle(atan2(newPos.y,newPos.x)*180/M_PI);
+	}
+
+
 }
 
 void updateBullets(GLdouble timeDiff){
@@ -204,8 +233,10 @@ void updateCar(GLdouble timeDiff) {
 	gy += delta.y;
 	gx += delta.x;
 
-	if(!gameStarted && wPressed)
+	if(!gameStarted && wPressed){
 		gameStarted = true;
+		timeGameStarted = glutGet(GLUT_ELAPSED_TIME);
+	}
 }
 
 void mouse(int botao, int estado, int x, int y){
@@ -304,6 +335,7 @@ void idle (void)
 
 
 	updateCar(timeDifference);
+	updateEnemies(timeDifference);
 	controlEnemyShots();
 	updateBullets(timeDifference);
 
@@ -314,13 +346,15 @@ void idle (void)
 		playerWon = false; // player lost
 	}
 
-	vector<Car*>::iterator it;
+	if(gameStarted && !gameOver){
+		vector<Car*>::iterator it;
 
-	for(it = enemies.begin() ; it != enemies.end() ; ){
-			if(checkBulletHit(&player_bullets,(*it)))
-				it = enemies.erase(it);
-			else
-				it++;
+		for(it = enemies.begin() ; it != enemies.end() ; ){
+				if(checkBulletHit(&player_bullets,(*it)))
+					it = enemies.erase(it);
+				else
+					it++;
+		}
 	}
 
 	glutPostRedisplay();
@@ -345,7 +379,6 @@ bool player_collided(){
 
 void printTimer(){
 
-	static GLdouble initTime = 0;
 	static int minutes = 0;
 	static GLdouble seconds = 0;
 	GLdouble currentTime;
@@ -356,14 +389,14 @@ void printTimer(){
 			// Get time from the beginning of the game
 			currentTime = glutGet(GLUT_ELAPSED_TIME);
 
-			elapsed = currentTime - initTime;
+			elapsed = currentTime - timeGameStarted;
 			minutes = (int) elapsed/60000;
 			seconds = elapsed/1000 - minutes*60;
 		}
 
 		//Create a string to be printed
 		char *tmpStr;
-		sprintf(str, "Time: %2d:%2.2f", minutes, seconds );
+		sprintf(str, "Time: %2d:%02.2f", minutes, seconds );
 		//Define the position to start printing
 		glColor3f(0.0,0.0,0.0);
 		glRasterPos2f(windowWidth/2-15*9,windowHeight/2-20);
