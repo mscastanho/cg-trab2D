@@ -161,6 +161,36 @@ void controlEnemyShots(){
 	}
 }
 
+// This function returns true if a car has collided if it is outside of the
+// arena. And return false otherwise.
+bool collidedWithArena(Car* c){
+	return !(c->insideOf(arenaOut) && c->outsideOf(arenaIn));
+}
+
+
+bool collidedWithEnemies(Car* c){
+
+	vector<Car*>::iterator it;
+	bool outsideEnemies = true;
+
+	for(it = enemies.begin();it != enemies.end(); it++){
+		if(*it != c) // check if we're not comparing an object to itself
+			outsideEnemies = outsideEnemies && c->outsideOf( (*it) );
+	}
+	return !outsideEnemies;
+
+}
+
+// This function returns true if the enemy has collided with the player
+// or if it is outside of the arena. And return false otherwise.
+bool collidedWithPlayer(Car* enemy){
+
+	bool outsidePlayer = enemy->outsideOf(player);
+
+	return !outsidePlayer;
+
+}
+
 void updateEnemies(GLdouble timeDiff){
 	vector<Car*>::iterator it = enemies.begin();
 	Point oldPos, newPos;
@@ -181,8 +211,17 @@ void updateEnemies(GLdouble timeDiff){
 		newPos.x = oldPos.x + dx;
 		newPos.y = oldPos.y + dy;
 
-		(*it)->set_position(newPos);
-		(*it)->set_cAngle(oldcAngle+enemySpeed*180/(R*M_PI));
+		(*it)->inc_position(dx,dy);
+		bool collisionPlayer = collidedWithPlayer(*it);
+		bool collisionArena = collidedWithArena(*it);
+		bool collisionEnemies = collidedWithEnemies(*it);
+
+		if(collisionPlayer || collisionArena || collisionEnemies)
+			(*it)->inc_position(-dx,-dy);
+		else
+			(*it)->set_cAngle(oldcAngle+enemySpeed*180/(R*M_PI));
+
+
 	}
 
 }
@@ -216,29 +255,71 @@ void displayBullets(){
 		(*it)->draw();
 }
 
-void updatePlayer(GLdouble timeDiff) {
+bool checkCheckpoint (Point oldPos, Point newPos){
+	float innerRadius = arenaIn->get_radius();
+	float outerRadius = arenaOut->get_radius();
 
-	float wheelAngle = player->get_wAngle();
-	bool wPressed, sPressed, aPressed, dPressed;
-
-	dPressed = (keyStatus['D'] == 1 || keyStatus['d'] == 1) && wheelAngle > -45+ANGLE_SPEED;
-
-	aPressed = (keyStatus['A'] == 1 || keyStatus['a'] == 1) && wheelAngle < 45-ANGLE_SPEED;
-
-	wPressed = keyStatus['W'] == 1 || keyStatus['w'] == 1;
-
-	sPressed = keyStatus['S'] == 1 || keyStatus['s'] == 1;
-
-
-	Point delta = player->update(wPressed,sPressed,aPressed,dPressed,timeDiff);
-
-	gy += delta.y;
-	gx += delta.x;
-
-	if(!gameStarted && wPressed){
-		gameStarted = true;
-		timeGameStarted = glutGet(GLUT_ELAPSED_TIME);
+	if((oldPos.x > -outerRadius) && (newPos.x > -outerRadius)){
+		if((oldPos.x < -innerRadius) && (newPos.x < -innerRadius)){
+			if((oldPos.y > 0) && (newPos.y < 0))
+				return true; //crossed the checkpoint
+		}
 	}
+
+	return false;
+}
+
+bool crossedFinishLine (Point oldPos, Point newPos){
+	float innerRadius = arenaIn->get_radius();
+	float outerRadius = arenaOut->get_radius();
+
+	if((oldPos.x < outerRadius) && (newPos.x < outerRadius)){
+		if((oldPos.x > innerRadius) && (newPos.x > innerRadius)){
+			if((oldPos.y < 0) && (newPos.y > 0))
+				return true; //crossed the finish line
+		}
+	}
+
+	return false;
+}
+
+void updatePlayer(bool w, bool s, bool a, bool d, GLdouble timeDiff) {
+
+	// Calculate new position
+	Point delta = player->update(w,s,a,d,timeDiff);
+
+	//gy += delta.y;
+	//gx += delta.x;
+
+	// Check collisions
+	Point oldPos = player->get_position();
+
+	player->inc_position(delta.x,0);
+	bool collisionE = collidedWithEnemies(player);
+	bool collisionA = collidedWithArena(player);
+
+	if(collisionE || collisionA)
+		player->inc_position(-delta.x,0);
+
+	player->inc_position(0,delta.y);
+	collisionE = collidedWithEnemies(player);
+	collisionA = collidedWithArena(player);
+
+	if(collisionE || collisionA){
+	 	player->inc_position(0,-delta.y);
+	}
+
+
+	Point newPos = player->get_position();
+
+	// Check if player has crossed checkpoint of finish line
+	if(!crossedCheckpoint){
+		crossedCheckpoint = checkCheckpoint(oldPos,newPos);
+	}else if(crossedFinishLine(oldPos,newPos)){
+		gameOver = true;
+		playerWon = true;
+	}
+
 }
 
 void mouse(int botao, int estado, int x, int y){
@@ -334,20 +415,42 @@ void idle (void)
 	pgx = gx;
 	pgy = gy;
 
+	float wheelAngle = player->get_wAngle();
+	bool wPressed, sPressed, aPressed, dPressed;
 
-	updatePlayer(timeDifference);
-	updateEnemies(timeDifference);
-	controlEnemyShots();
-	updateBullets(timeDifference);
+	dPressed = (keyStatus['D'] == 1 || keyStatus['d'] == 1) && wheelAngle > -45+ANGLE_SPEED;
 
-	bool playerHit = checkBulletHit(&enemy_bullets,player);
+	aPressed = (keyStatus['A'] == 1 || keyStatus['a'] == 1) && wheelAngle < 45-ANGLE_SPEED;
 
-	if(playerHit){
-		gameOver = true;
-		playerWon = false; // player lost
+	wPressed = keyStatus['W'] == 1 || keyStatus['w'] == 1;
+
+	sPressed = keyStatus['S'] == 1 || keyStatus['s'] == 1;
+
+	// Check game start
+	if(!gameStarted && wPressed){
+		gameStarted = true;
+		timeGameStarted = glutGet(GLUT_ELAPSED_TIME);
 	}
 
-	if(gameStarted && !gameOver){
+	if(gameStarted && (!gameOver || (gameOver && playerWon))){
+
+		updatePlayer(wPressed,sPressed,aPressed,dPressed,timeDifference);
+		updateEnemies(timeDifference);
+
+		if(!gameOver)
+			controlEnemyShots();
+
+		updateBullets(timeDifference);
+
+		if(!gameOver){
+			bool playerHit = checkBulletHit(&enemy_bullets,player);
+
+			if(playerHit){
+				gameOver = true;
+				playerWon = false; // player lost
+			}
+		}
+
 		vector<Car*>::iterator it;
 
 		for(it = enemies.begin() ; it != enemies.end() ; ){
@@ -359,22 +462,6 @@ void idle (void)
 	}
 
 	glutPostRedisplay();
-
-}
-
-// This function returns true if the player has collided with any of the enemies
-// or if it is outside of the arena. And return false otherwise.
-bool player_collided(){
-
-	bool insideArena = player->insideOf(arenaOut) && player->outsideOf(arenaIn);
-
-	vector<Car*>::iterator it;
-	bool outsideEnemies = true;
-
-	for(it = enemies.begin();it != enemies.end(); it++)
-		outsideEnemies = outsideEnemies && player->outsideOf( (*it) );
-
-	return !(insideArena && outsideEnemies);
 
 }
 
@@ -412,61 +499,8 @@ void printTimer(){
 		}
 }
 
-bool checkCheckpoint (Point oldPos, Point newPos){
-	float innerRadius = arenaIn->get_radius();
-	float outerRadius = arenaOut->get_radius();
-
-	if((oldPos.x > -outerRadius) && (newPos.x > -outerRadius)){
-		if((oldPos.x < -innerRadius) && (newPos.x < -innerRadius)){
-			if((oldPos.y > 0) && (newPos.y < 0))
-				return true; //crossed the checkpoint
-		}
-	}
-
-	return false;
-}
-
-bool crossedFinishLine (Point oldPos, Point newPos){
-	float innerRadius = arenaIn->get_radius();
-	float outerRadius = arenaOut->get_radius();
-
-	if((oldPos.x < outerRadius) && (newPos.x < outerRadius)){
-		if((oldPos.x > innerRadius) && (newPos.x > innerRadius)){
-			if((oldPos.y < 0) && (newPos.y > 0))
-				return true; //crossed the finish line
-		}
-	}
-
-	return false;
-}
-
 void display(void)
 {
-
-	Point oldPos = player->get_position();
-
-	player->inc_position(gx,0);
-	bool collisionX = player_collided();
-
-	if(collisionX)
-		player->inc_position(-gx,0);
-
-	player->inc_position(0,gy);
-	bool collisionY = player_collided();
-
-	if(collisionY){
-	 	player->inc_position(0,-gy);
-	}
-
-	Point newPos = player->get_position();
-
-	if(!crossedCheckpoint){
-		crossedCheckpoint = checkCheckpoint(oldPos,newPos);
-	}else if(crossedFinishLine(oldPos,newPos)){
-		gameOver = true;
-		playerWon = true;
-	}
-
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	arenaOut->draw();
