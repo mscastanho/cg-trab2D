@@ -70,7 +70,9 @@ float Car::get_cnAngle(){
 }
 
 void Car::inc_cnAngle(float da){
-	this->canonAngle += da;
+
+  if(this->canonAngle + da > -45 && this->canonAngle + da < 45)
+	   this->canonAngle += da;
 }
 
 void Car::inc_position(float dx, float dy){

@@ -70,6 +70,11 @@ bool playerWon;
 // States if the player has already crossed the checkpoint
 bool crossedCheckpoint = false;
 
+// Seeds for random number generation
+time_t seedMag;
+time_t seedSign;
+
+
 // This function calculates the deltas to adjust all coordinates so the center
 // of the arena is the new origin
 void setNewOrigin(){
@@ -199,6 +204,7 @@ void updateEnemies(GLdouble timeDiff){
 	float oldAngle, oldcAngle;
 
 	for(it = enemies.begin() ; it != enemies.end() ; it++){
+		// Update position
 		oldPos = (*it)->get_position();
 		oldAngle = (atan2(oldPos.y,oldPos.x));
 		oldcAngle = (*it)->get_cAngle();
@@ -212,6 +218,8 @@ void updateEnemies(GLdouble timeDiff){
 		newPos.y = oldPos.y + dy;
 
 		(*it)->inc_position(dx,dy);
+
+		// Check collisions, undo update if necessary
 		bool collisionPlayer = collidedWithPlayer(*it);
 		bool collisionArena = collidedWithArena(*it);
 		bool collisionEnemies = collidedWithEnemies(*it);
@@ -221,7 +229,18 @@ void updateEnemies(GLdouble timeDiff){
 		else
 			(*it)->set_cAngle(oldcAngle+enemySpeed*180/(R*M_PI));
 
+		// Change canon angle randomly
+		srand((unsigned int) seedMag);
+		int ang = rand();
+		srand((unsigned int) seedSign);
+		int sign = rand();
 
+		if(sign%2 == 0)
+			(*it)->inc_cnAngle(ang%5);
+		else
+			(*it)->inc_cnAngle(-ang%5);
+
+		cout << ang << endl;
 	}
 
 }
@@ -524,6 +543,9 @@ void display(void)
 	/* Trocar buffers */
 	glutSwapBuffers();
 	gx = gy = 0;
+
+	time(&seedMag);
+	time(&seedSign);
 }
 
 

@@ -144,11 +144,6 @@ void parseSVGFile (string filePath){
 
   XMLDocument arenaFile;
 
-  // Define seed for random number generation used later
-  time_t seconds;
-  time(&seconds);
-  srand((unsigned int) seconds);
-
   // Treat case when the filePath has '~'
   if(filePath[0] == '~'){
     filePath.erase(0,1);
