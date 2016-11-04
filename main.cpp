@@ -112,10 +112,11 @@ void setNewOrigin(){
 		Point pos = (*it)->get_position();
 		pos.x -= dx;
 		pos.y = (windowHeight - pos.y) - dy;
+		float trajRadius = sqrt(pos.x*pos.x + pos.y*pos.y);
+		(*it)->set_trajRadius(trajRadius);
 		(*it)->set_position(pos);
 		float angle = atan2(pos.y,pos.x)*180/M_PI;
 		(*it)->set_cAngle(angle);
-		cout << angle << endl;
 	}
 
 }
@@ -165,25 +166,24 @@ void updateEnemies(GLdouble timeDiff){
 	Point oldPos, newPos;
 	float enemySpeed = ENEMY_SPEED*timeDiff;
 	float R; //trajectory radius
-	float oldAngle;
+	float oldAngle, oldcAngle;
 
 	for(it = enemies.begin() ; it != enemies.end() ; it++){
 		oldPos = (*it)->get_position();
-		R = 100;//sqrt(oldPos.x*oldPos.x + oldPos.y*oldPos.y);
-		oldAngle = atan2(oldPos.y,oldPos.x);
-		cout << oldAngle << endl;
-		//newAngle = (oldAngle + enemySpeed/(2*R*M_PI))*180/M_PI;
-		//cout << newAngle << endl;
-		//newPos.x = R*cos(newAngle);
-		//newPos.y = R*sin(newAngle);
-		newPos.x = oldPos.x + R*enemySpeed*cos(oldAngle+M_PI/2);
-		newPos.y = oldPos.y + R*enemySpeed*sin(oldAngle+M_PI/2);
+		oldAngle = (atan2(oldPos.y,oldPos.x));
+		oldcAngle = (*it)->get_cAngle();
+
+		R = (*it)->get_trajRadius();
+
+		float dx = R*cos(oldAngle + enemySpeed/R) - R*cos(oldAngle);
+		float dy = R*sin(oldAngle + enemySpeed/R) - R*sin(oldAngle);
+
+		newPos.x = oldPos.x + dx;
+		newPos.y = oldPos.y + dy;
 
 		(*it)->set_position(newPos);
-		//(*it)->set_cAngle(atan2(newPos.y,newPos.x)*180/M_PI);
+		(*it)->set_cAngle(oldcAngle+enemySpeed*180/(R*M_PI));
 	}
-
-
 
 }
 
@@ -216,7 +216,7 @@ void displayBullets(){
 		(*it)->draw();
 }
 
-void updateCar(GLdouble timeDiff) {
+void updatePlayer(GLdouble timeDiff) {
 
 	float wheelAngle = player->get_wAngle();
 	bool wPressed, sPressed, aPressed, dPressed;
@@ -335,7 +335,7 @@ void idle (void)
 	pgy = gy;
 
 
-	updateCar(timeDifference);
+	updatePlayer(timeDifference);
 	updateEnemies(timeDifference);
 	controlEnemyShots();
 	updateBullets(timeDifference);
@@ -446,13 +446,15 @@ void display(void)
 	Point oldPos = player->get_position();
 
 	player->inc_position(gx,0);
-	player->inc_position(0,gy);
-
 	bool collisionX = player_collided();
+
+	if(collisionX)
+		player->inc_position(-gx,0);
+
+	player->inc_position(0,gy);
 	bool collisionY = player_collided();
 
-	if(collisionX || collisionY){
-	 	player->inc_position(-gx,0);
+	if(collisionY){
 	 	player->inc_position(0,-gy);
 	}
 

@@ -18,6 +18,7 @@ Car::Car(Point pos, float radius, Color c, float cAng, float cnAng, float wAng){
   this->bodyColor = c;
   this->moving = false;
   this->radius = radius;
+  this->trajRadius = 0;
   this->size = radius/RADIUS_SIZE_RATIO;
   this->carAngle = cAng;
   this->canonAngle = cnAng;
@@ -34,6 +35,14 @@ Point Car::get_position(){
 
 void Car::set_position(Point pos){
 	this->position = pos;
+}
+
+float Car::get_trajRadius(){
+  return this->trajRadius;
+}
+
+void Car::set_trajRadius(float r){
+  this->trajRadius = r;
 }
 
 float Car::get_wAngle(){

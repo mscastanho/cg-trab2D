@@ -31,6 +31,7 @@ class Car {
   Color styleColor;
 	bool moving;
 	float radius;
+	float trajRadius; //trajectory radius for enemies` movement
 	float carAngle;
 	float canonAngle;
 	float wheelAngle;
@@ -42,6 +43,8 @@ class Car {
 	Point get_position();
 	void set_position(Point pos);
 	void inc_position(float dx, float dy);
+	float get_trajRadius();
+	void set_trajRadius(float r);
 	float get_wAngle();
 	void inc_wAngle(float da);
 	float get_cAngle();
