@@ -239,8 +239,6 @@ void updateEnemies(GLdouble timeDiff){
 			(*it)->inc_cnAngle(ang%5);
 		else
 			(*it)->inc_cnAngle(-ang%5);
-
-		cout << ang << endl;
 	}
 
 }
